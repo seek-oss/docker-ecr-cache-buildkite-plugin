@@ -42,7 +42,7 @@ RUN npm install
 steps:
   - command: 'npm test'
     plugins:
-      - seek-oss/docker-ecr-cache#v0.0.1:
+      - seek-oss/docker-ecr-cache#v0.0.2:
           cache-on:
             - package-lock.json
       - docker#v2.0.0
@@ -56,8 +56,8 @@ It's possible to specify the Dockerfile to use by:
 steps:
   - command: 'echo wow'
     plugins:
-      - seek-oss/docker-ecr-cache#v0.0.1
-        dockerfile: my-dockerfile
+      - seek-oss/docker-ecr-cache#v0.0.2
+          dockerfile: my-dockerfile
       - docker#v2.0.0
 ```
 
