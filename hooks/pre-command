@@ -45,10 +45,10 @@ repository_name="build-in-docker/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPE
 upsert_ecr "${repository_name}"
 image_name="$(get_ecr_url ${repository_name}):$(compute_tag ${docker_file})"
 
-if ! docker pull "${IMAGE_NAME}"; then
+if ! docker pull "${image_name}"; then
   echo "Image not cached, building"
   docker build . --file "${docker_file}" -t "${image_name}"
-  docker push "${IMAGE_NAME}"
+  docker push "${image_name}"
 fi || echo "Not found"
 
 # Support using https://github.com/buildkite-plugins/docker-buildkite-plugin without an image
