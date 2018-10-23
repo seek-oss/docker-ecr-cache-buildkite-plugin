@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+get_ecr_url() {
+  local repository_name="$1"
+  aws ecr describe-repositories \
+    --repository-names "${repository_name}" \
+    --output text \
+    --query 'repositories[0].repositoryUri'
+}
+
+ecr_exists() {
+  local repository_name="$1"
+  aws ecr describe-repositories \
+    --repository-names "${repository_name}" \
+    --output text \
+    --query '.na' 2>&1 \
+  | grep -q 'RepositoryAlreadyExistsException'
+  [[ $? -ne 0 ]]
+}
+
+upsert_ecr() {
+  local repository_name="$1"
+  if ! ecr_exists "${repository_name}"; then
+    aws ecr create-repository --repository-name "${repository_name}"
+  fi
+}
+
+compute_tag() {
+  local docker_file="$1"
+  local sums=($(sha1sum "${docker_file}"))
+  while IFS='=' read -r name _ ; do
+    if [[ $name =~ ^(BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_CACHE_ON_[0-9]+) ]] ; then
+      local sha=($(sha1sum "${!name}"))
+      sums="${sums}${sha}"
+    fi
+  done < <(env | sort)
+  echo "${sums}" | sha1sum | cut -c 7
+}
+
+docker_file="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-Dockerfile}"
+$(aws ecr get-login --no-include-email)
+repository_name="build-in-docker/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}"
+upsert_ecr "${repository_name}"
+image_name="$(get_ecr_url ${repository_name}):$(compute_tag ${docker_file})"
+
+if ! docker pull "${IMAGE_NAME}"; then
+  echo "Image not cached, building"
+  docker build . --file "${docker_file}" -t "${image_name}"
+  docker push "${IMAGE_NAME}"
+fi || echo "Not found"
+
+# Support using https://github.com/buildkite-plugins/docker-buildkite-plugin without an image
+export BUILDKITE_PLUGIN_DOCKER_IMAGE="${image_name}"
