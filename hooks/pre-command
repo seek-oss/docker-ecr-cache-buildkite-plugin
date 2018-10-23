@@ -39,10 +39,10 @@ compute_tag() {
   echo "${sums}" | sha1sum | cut -c 7
 }
 
-docker_file="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-Dockerfile}"
 $(aws ecr get-login --no-include-email)
-repository_name="build-in-docker/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}"
+repository_name="build-cache/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}"
 upsert_ecr "${repository_name}"
+docker_file="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-Dockerfile}"
 image_name="$(get_ecr_url ${repository_name}):$(compute_tag ${docker_file})"
 
 if ! docker pull "${image_name}"; then
