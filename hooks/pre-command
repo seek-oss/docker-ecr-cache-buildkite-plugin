@@ -45,7 +45,7 @@ image_name="$(get_ecr_url ${repository_name}):$(compute_tag ${docker_file})"
 
 if ! docker pull "${image_name}"; then
   echo "Image not cached, building"
-  docker build . --file "${docker_file}" -t "${image_name}"
+  docker build . --file "${docker_file}" -t "${image_name}" || exit 1
   docker push "${image_name}"
 fi || echo "Not found"
 
