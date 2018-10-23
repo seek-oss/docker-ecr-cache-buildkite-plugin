@@ -34,7 +34,7 @@ compute_tag() {
       sums="${sums}${sha}"
     fi
   done < <(env | sort)
-  echo "${sums}" | sha1sum | cut -c 7
+  echo "${sums}" | sha1sum | cut -c-7
 }
 
 $(aws ecr get-login --no-include-email)
