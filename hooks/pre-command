@@ -15,9 +15,7 @@ ecr_exists() {
   aws ecr describe-repositories \
     --repository-names "${repository_name}" \
     --output text \
-    --query '.na' 2>&1 \
-  | grep -q 'RepositoryAlreadyExistsException'
-  [[ $? -ne 0 ]]
+    --query 'repositories[0].registryId'
 }
 
 upsert_ecr() {
