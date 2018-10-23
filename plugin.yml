@@ -6,7 +6,9 @@ requirements:
 configuration:
   properties:
     dockerfile:
-      type: object
+      type: string
     cache-on:
       type: array
+    ecr-name:
+      type: string
   required: []

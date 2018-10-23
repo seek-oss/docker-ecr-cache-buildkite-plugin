@@ -38,7 +38,8 @@ compute_tag() {
 }
 
 $(aws ecr get-login --no-include-email)
-repository_name="build-cache/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}"
+default_repository_name="build-cache/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}"
+repository_name="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_NAME:-${default_repository_name}}"
 upsert_ecr "${repository_name}"
 docker_file="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-Dockerfile}"
 image_name="$(get_ecr_url ${repository_name}):$(compute_tag ${docker_file})"
