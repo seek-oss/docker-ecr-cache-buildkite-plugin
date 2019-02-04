@@ -20,7 +20,7 @@ RUN echo "my expensive build step"
 steps:
   - command: 'echo wow'
     plugins:
-      - seek-oss/docker-ecr-cache#v0.0.3
+      - seek-oss/docker-ecr-cache#v1.0.0
       - docker#v2.0.0
 ```
 
@@ -42,7 +42,7 @@ RUN npm install
 steps:
   - command: 'npm test'
     plugins:
-      - seek-oss/docker-ecr-cache#v0.0.3:
+      - seek-oss/docker-ecr-cache#v1.0.0:
           cache-on:
             - package-lock.json
       - docker#v2.0.0
@@ -56,7 +56,7 @@ It's possible to specify the Dockerfile to use by:
 steps:
   - command: 'echo wow'
     plugins:
-      - seek-oss/docker-ecr-cache#v0.0.3:
+      - seek-oss/docker-ecr-cache#v1.0.0:
           dockerfile: my-dockerfile
       - docker#v2.0.0
 ```
