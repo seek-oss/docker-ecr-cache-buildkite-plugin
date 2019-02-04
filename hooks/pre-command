@@ -31,7 +31,7 @@ compute_tag() {
   while IFS='=' read -r name _ ; do
     if [[ $name =~ ^(BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_CACHE_ON_[0-9]+) ]] ; then
       local sha=($(sha1sum "${!name}"))
-      sums="${sums}${sha}"
+      sums="${sums}${sha:-''}"
     fi
   done < <(env | sort)
   echo "${sums}" | sha1sum | cut -c-7
