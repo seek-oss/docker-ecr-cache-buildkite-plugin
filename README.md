@@ -6,6 +6,8 @@ This allows you to define a Dockerfile for your build-time dependencies without 
 takes to build the image. It allows you to re-use entire docker images without worrying about layer caching, and/or pruning
 layers as changes are made to your containers.
 
+An ECR repository to store the built docker image will be created for you, if one doesn't already exist.
+
 # Example
 
 ## Basic Usage
