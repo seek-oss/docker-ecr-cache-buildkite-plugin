@@ -44,9 +44,14 @@ upsert_ecr "${repository_name}"
 docker_file="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-Dockerfile}"
 image_name="$(get_ecr_url ${repository_name}):$(compute_tag ${docker_file})"
 
+target_arg=""
+if [[ ! -z "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET}" ]]; then
+  target_arg="--target ${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET}"
+fi
+
 if ! docker pull "${image_name}"; then
   echo "Image not cached, building"
-  docker build . --file "${docker_file}" -t "${image_name}" || exit 1
+  docker build . --file "${docker_file}" -t "${image_name}" ${target_arg} || exit 1
   docker push "${image_name}"
 fi || echo "Not found"
 

@@ -63,6 +63,21 @@ steps:
       - docker#v2.0.0
 ```
 
+## Specifying a target step
+
+A [multi-stage Docker build](https://docs.docker.com/develop/develop-images/multistage-build/) can be used to reduce an application container to just its runtime dependencies.
+However, this stripped down container may not have the environment necessary for running CI commands such as tests or linting.
+Instead, the `target` property can be used to specify an intermediate build stage to run commands against:
+
+```yml
+steps:
+  - command: 'cargo test'
+    plugins:
+      - seek-oss/docker-ecr-cache#v1.0.0:
+          target: build-deps
+      - docker#v2.0.0
+```
+
 # Tests
 
 To run the tests of this plugin, run
