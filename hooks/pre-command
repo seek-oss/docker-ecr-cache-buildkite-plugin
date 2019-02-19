@@ -46,7 +46,7 @@ image_name="$(get_ecr_url ${repository_name}):$(compute_tag ${docker_file})"
 
 target_arg=""
 if [[ ! -z "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET}" ]]; then
-	target_arg="--target ${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET}"
+  target_arg="--target ${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET}"
 fi
 
 if ! docker pull "${image_name}"; then
