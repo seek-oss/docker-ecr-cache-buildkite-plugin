@@ -22,7 +22,7 @@ RUN echo "my expensive build step"
 steps:
   - command: 'echo wow'
     plugins:
-      - seek-oss/docker-ecr-cache#v1.0.0
+      - seek-oss/docker-ecr-cache#v1.1.0
       - docker#v2.0.0
 ```
 
@@ -44,7 +44,7 @@ RUN npm install
 steps:
   - command: 'npm test'
     plugins:
-      - seek-oss/docker-ecr-cache#v1.0.0:
+      - seek-oss/docker-ecr-cache#v1.1.0:
           cache-on:
             - package-lock.json
       - docker#v2.0.0
@@ -58,7 +58,7 @@ It's possible to specify the Dockerfile to use by:
 steps:
   - command: 'echo wow'
     plugins:
-      - seek-oss/docker-ecr-cache#v1.0.0:
+      - seek-oss/docker-ecr-cache#v1.1.0:
           dockerfile: my-dockerfile
       - docker#v2.0.0
 ```
@@ -73,7 +73,7 @@ Instead, the `target` property can be used to specify an intermediate build stag
 steps:
   - command: 'cargo test'
     plugins:
-      - seek-oss/docker-ecr-cache#v1.0.0:
+      - seek-oss/docker-ecr-cache#v1.1.0:
           target: build-deps
       - docker#v2.0.0
 ```
