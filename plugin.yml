@@ -11,4 +11,6 @@ configuration:
       type: array
     ecr-name:
       type: string
+    target:
+      type: string
   required: []
