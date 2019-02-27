@@ -45,7 +45,7 @@ docker_file="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-Dockerfile}"
 image_name="$(get_ecr_url ${repository_name}):$(compute_tag ${docker_file})"
 
 target_arg=""
-if [[ ! -z "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET}" ]]; then
+if [[ ! -z "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET:-}" ]]; then
   target_arg="--target ${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET}"
 fi
 
