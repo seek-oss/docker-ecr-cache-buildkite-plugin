@@ -44,18 +44,21 @@ default_repository_name="build-cache/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_
 repository_name="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_NAME:-${default_repository_name}}"
 upsert_ecr "${repository_name}"
 docker_file="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-Dockerfile}"
-image_name="$(get_ecr_url "${repository_name}"):$(compute_tag "${docker_file}")"
+image="$(get_ecr_url "${repository_name}")"
+tag="$(compute_tag "${docker_file}")"
 
 target_args=()
 if [[ -n ${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET:-} ]]; then
   target_args+=('--target' "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET}")
 fi
 
-if ! docker pull "${image_name}"; then
+if ! docker pull "${image}:${tag}"; then
   echo "Image not cached, building"
-  docker build . --file "${docker_file}" --tag "${image_name}" "${target_args[@]}" || exit 1
-  docker push "${image_name}"
+  docker build . --file "${docker_file}" --tag "${image}:${tag}" "${target_args[@]}" || exit 1
+  docker push "${image}:${tag}"
+  docker tag "${image}:${tag}" "${image}:latest"
+  docker push "${image}:latest"
 fi || echo "Not found"
 
 # Support using https://github.com/buildkite-plugins/docker-buildkite-plugin without an image
-export BUILDKITE_PLUGIN_DOCKER_IMAGE="${image_name}"
+export BUILDKITE_PLUGIN_DOCKER_IMAGE="${image}:${tag}"
