@@ -53,10 +53,14 @@ if [[ -n ${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET:-} ]]; then
 fi
 
 if ! docker pull "${image}:${tag}"; then
-  echo "Image not cached, building"
+  echo '--- Building image'
   docker build . --file "${docker_file}" --tag "${image}:${tag}" "${target_args[@]}" || exit 1
-  docker push "${image}:${tag}"
   docker tag "${image}:${tag}" "${image}:latest"
+
+  echo "--- Pushing tag ${tag}"
+  docker push "${image}:${tag}"
+
+  echo "--- Pushing tag latest"
   docker push "${image}:latest"
 fi || echo "Not found"
 
