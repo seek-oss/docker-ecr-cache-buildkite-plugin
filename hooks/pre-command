@@ -3,7 +3,7 @@
 set -euo pipefail
 
 get_ecr_url() {
-  local repository_name="$1"
+  local repository_name="${1}"
   aws ecr describe-repositories \
     --repository-names "${repository_name}" \
     --output text \
@@ -11,7 +11,7 @@ get_ecr_url() {
 }
 
 ecr_exists() {
-  local repository_name="$1"
+  local repository_name="${1}"
   aws ecr describe-repositories \
     --repository-names "${repository_name}" \
     --output text \
@@ -19,7 +19,7 @@ ecr_exists() {
 }
 
 upsert_ecr() {
-  local repository_name="$1"
+  local repository_name="${1}"
   if ! ecr_exists "${repository_name}"; then
     aws ecr create-repository --repository-name "${repository_name}"
   fi
@@ -27,11 +27,13 @@ upsert_ecr() {
 
 compute_tag() {
   local docker_file="$1"
-  local sums=($(sha1sum "${docker_file}"))
+  local sums
+
+  sums="$(sha1sum "${docker_file}")"
+
   while IFS='=' read -r name _ ; do
-    if [[ $name =~ ^(BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_CACHE_ON_[0-9]+) ]] ; then
-      local sha=($(sha1sum "${!name}"))
-      sums="${sums}${sha:-''}"
+    if [[ ${name} =~ ^(BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_CACHE_ON_[0-9]+) ]] ; then
+      sums="${sums}$(sha1sum "${!name}")"
     fi
   done < <(env | sort)
   echo "${sums}" | sha1sum | cut -c-7
@@ -42,18 +44,25 @@ default_repository_name="build-cache/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_
 repository_name="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_NAME:-${default_repository_name}}"
 upsert_ecr "${repository_name}"
 docker_file="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-Dockerfile}"
-image_name="$(get_ecr_url ${repository_name}):$(compute_tag ${docker_file})"
+image="$(get_ecr_url "${repository_name}")"
+tag="$(compute_tag "${docker_file}")"
 
-target_arg=""
-if [[ ! -z "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET:-}" ]]; then
-  target_arg="--target ${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET}"
+target_args=()
+if [[ -n ${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET:-} ]]; then
+  target_args+=('--target' "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET}")
 fi
 
-if ! docker pull "${image_name}"; then
-  echo "Image not cached, building"
-  docker build . --file "${docker_file}" -t "${image_name}" ${target_arg} || exit 1
-  docker push "${image_name}"
+if ! docker pull "${image}:${tag}"; then
+  echo '--- Building image'
+  docker build . --file "${docker_file}" --tag "${image}:${tag}" "${target_args[@]}" || exit 1
+  docker tag "${image}:${tag}" "${image}:latest"
+
+  echo "--- Pushing tag ${tag}"
+  docker push "${image}:${tag}"
+
+  echo "--- Pushing tag latest"
+  docker push "${image}:latest"
 fi || echo "Not found"
 
 # Support using https://github.com/buildkite-plugins/docker-buildkite-plugin without an image
-export BUILDKITE_PLUGIN_DOCKER_IMAGE="${image_name}"
+export BUILDKITE_PLUGIN_DOCKER_IMAGE="${image}:${tag}"
