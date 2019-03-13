@@ -25,17 +25,52 @@ upsert_ecr() {
   fi
 }
 
+read_build_args() {
+  if read_list_property 'BUILD_ARGS'; then
+    for arg in "${result[@]}"; do
+      build_args+=('--build-arg' "${arg}")
+    done
+  fi
+}
+
+# read a plugin property of type [array, string] into a Bash array. Buildkite
+# exposes a string value at BUILDKITE_PLUGIN_{NAME}_{KEY}, and array values at
+# BUILDKITE_PLUGIN_{NAME}_{KEY}_{IDX}.
+read_list_property() {
+  local prefix="BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_${1}"
+  local property="${prefix}_0"
+
+  result=()
+
+  if [[ -n ${!property:-} ]]; then
+    local i=0
+    local property="${prefix}_${i}"
+
+    while [[ -n ${!property:-} ]]; do
+      result+=("${!property}")
+
+      i=$((i+1))
+      property="${prefix}_${i}"
+    done
+  elif [[ -n ${!prefix:-} ]]; then
+    result+=("${!prefix}")
+  fi
+
+  [[ ${#result[@]} -gt 0 ]] || return 1
+}
+
 compute_tag() {
   local docker_file="$1"
   local sums
 
   sums="$(sha1sum "${docker_file}")"
 
-  while IFS='=' read -r name _ ; do
-    if [[ ${name} =~ ^(BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_CACHE_ON_[0-9]+) ]] ; then
-      sums="${sums}$(sha1sum "${!name}")"
-    fi
-  done < <(env | sort)
+  if read_list_property 'CACHE_ON'; then
+    for file in "${result[@]}"; do
+      sums="${sums}$(sha1sum "${file}")"
+    done
+  fi
+
   echo "${sums}" | sha1sum | cut -c-7
 }
 
@@ -52,9 +87,12 @@ if [[ -n ${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET:-} ]]; then
   target_args+=('--target' "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET}")
 fi
 
+build_args=()
+read_build_args
+
 if ! docker pull "${image}:${tag}"; then
   echo '--- Building image'
-  docker build . --file "${docker_file}" --tag "${image}:${tag}" "${target_args[@]}" || exit 1
+  docker build . --file "${docker_file}" --tag "${image}:${tag}" "${build_args[@]}" "${target_args[@]}" || exit 1
   docker tag "${image}:${tag}" "${image}:latest"
 
   echo "--- Pushing tag ${tag}"
