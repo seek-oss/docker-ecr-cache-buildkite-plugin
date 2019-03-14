@@ -26,35 +26,29 @@ upsert_ecr() {
 }
 
 read_build_args() {
-  if read_list_property 'BUILD_ARGS'; then
-    for arg in "${result[@]}"; do
-      build_args+=('--build-arg' "${arg}")
-    done
-  fi
+  read_list_property 'BUILD_ARGS'
+  for arg in ${result[@]+"${result[@]}"}; do
+    build_args+=('--build-arg' "${arg}")
+  done
 }
 
 # read a plugin property of type [array, string] into a Bash array. Buildkite
 # exposes a string value at BUILDKITE_PLUGIN_{NAME}_{KEY}, and array values at
 # BUILDKITE_PLUGIN_{NAME}_{KEY}_{IDX}.
 read_list_property() {
-  local prefix="BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_${1}"
-  local property="${prefix}_0"
+  local base_name="BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_${1}"
 
   result=()
 
-  if [[ -n ${!property:-} ]]; then
-    local i=0
-    local property="${prefix}_${i}"
-
-    while [[ -n ${!property:-} ]]; do
-      result+=("${!property}")
-
-      i=$((i+1))
-      property="${prefix}_${i}"
-    done
-  elif [[ -n ${!prefix:-} ]]; then
-    result+=("${!prefix}")
+  if [[ -n ${!base_name:-} ]]; then
+    result+=("${!base_name}")
   fi
+
+  while IFS='=' read -r item_name _; do
+    if [[ ${item_name} =~ ^(${base_name}_[0-9]+) ]]; then
+      result+=("${!item_name}")
+    fi
+  done < <(env | sort)
 
   [[ ${#result[@]} -gt 0 ]] || return 1
 }
@@ -65,11 +59,10 @@ compute_tag() {
 
   sums="$(sha1sum "${docker_file}")"
 
-  if read_list_property 'CACHE_ON'; then
-    for file in "${result[@]}"; do
-      sums="${sums}$(sha1sum "${file}")"
-    done
-  fi
+  read_list_property 'CACHE_ON'
+  for file in ${result[@]+"${result[@]}"}; do
+    sums="${sums}$(sha1sum "${file}")"
+  done
 
   echo "${sums}" | sha1sum | cut -c-7
 }
