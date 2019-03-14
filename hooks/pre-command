@@ -59,9 +59,19 @@ compute_tag() {
 
   sums="$(sha1sum "${docker_file}")"
 
+  read_list_property 'BUILD_ARGS'
+  for arg in ${result[@]+"${result[@]}"}; do
+    # include underlying environment variable
+    if [[ ${arg} != *=* ]]; then
+      arg+="=${!arg:-}"
+    fi
+
+    sums+="$(echo "${arg}" | sha1sum)"
+  done
+
   read_list_property 'CACHE_ON'
   for file in ${result[@]+"${result[@]}"}; do
-    sums="${sums}$(sha1sum "${file}")"
+    sums+="$(sha1sum "${file}")"
   done
 
   echo "${sums}" | sha1sum | cut -c-7
