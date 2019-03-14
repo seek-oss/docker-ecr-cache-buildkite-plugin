@@ -1,7 +1,6 @@
 # Docker ECR Cache Buildkite Plugin
 
-[![GitHub
-Release](https://img.shields.io/github/release/seek-oss/docker-ecr-cache-buildkite-plugin.svg)](https://github.com/seek-oss/docker-ecr-cache-buildkite-plugin/releases)
+[![GitHub Release](https://img.shields.io/github/release/seek-oss/docker-ecr-cache-buildkite-plugin.svg)](https://github.com/seek-oss/docker-ecr-cache-buildkite-plugin/releases)
 
 A [Buildkite plugin](https://buildkite.com/docs/agent/v3/plugins) to cache
 Docker images in Amazon ECR.
@@ -76,12 +75,13 @@ steps:
 
 ### Specifying a target step
 
-A [multi-stage Docker
-build](https://docs.docker.com/develop/develop-images/multistage-build/) can be
-used to reduce an application container to just its runtime dependencies.
-However, this stripped down container may not have the environment necessary for
-running CI commands such as tests or linting. Instead, the `target` property can
-be used to specify an intermediate build stage to run commands against:
+A [multi-stage Docker build] can be used to reduce an application container to
+just its runtime dependencies. However, this stripped down container may not
+have the environment necessary for running CI commands such as tests or linting.
+Instead, the `target` property can be used to specify an intermediate build
+stage to run commands against:
+
+[multi-stage docker build]: https://docs.docker.com/develop/develop-images/multistage-build/
 
 ```yaml
 steps:
@@ -94,10 +94,10 @@ steps:
 
 ### Specifying build args
 
-[Build-time
-variables](https://docs.docker.com/engine/reference/commandline/build/#set-build-time-variables---build-arg)
-are supported, either with an explicit value, or without one to propagate an
-environment variable from the pipeline step:
+[Build-time variables] are supported, either with an explicit value, or without
+one to propagate an environment variable from the pipeline step:
+
+[build-time variables]: https://docs.docker.com/engine/reference/commandline/build/#set-build-time-variables---build-arg
 
 ```dockerfile
 FROM bash
