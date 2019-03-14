@@ -92,7 +92,7 @@ read_build_args
 
 if ! docker pull "${image}:${tag}"; then
   echo '--- Building image'
-  docker build . --file "${docker_file}" --tag "${image}:${tag}" "${build_args[@]}" "${target_args[@]}" || exit 1
+  docker build . --file "${docker_file}" --tag "${image}:${tag}" ${build_args[@]+"${build_args[@]}"} ${target_args[@]+"${target_args[@]}"} || exit 1
   docker tag "${image}:${tag}" "${image}:latest"
 
   echo "--- Pushing tag ${tag}"
