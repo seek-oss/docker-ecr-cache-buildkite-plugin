@@ -25,17 +25,53 @@ upsert_ecr() {
   fi
 }
 
+read_build_args() {
+  read_list_property 'BUILD_ARGS'
+  for arg in ${result[@]+"${result[@]}"}; do
+    build_args+=('--build-arg' "${arg}")
+  done
+}
+
+# read a plugin property of type [array, string] into a Bash array. Buildkite
+# exposes a string value at BUILDKITE_PLUGIN_{NAME}_{KEY}, and array values at
+# BUILDKITE_PLUGIN_{NAME}_{KEY}_{IDX}.
+read_list_property() {
+  local base_name="BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_${1}"
+
+  result=()
+
+  if [[ -n ${!base_name:-} ]]; then
+    result+=("${!base_name}")
+  fi
+
+  while IFS='=' read -r item_name _; do
+    if [[ ${item_name} =~ ^(${base_name}_[0-9]+) ]]; then
+      result+=("${!item_name}")
+    fi
+  done < <(env | sort)
+}
+
 compute_tag() {
   local docker_file="$1"
   local sums
 
   sums="$(sha1sum "${docker_file}")"
 
-  while IFS='=' read -r name _ ; do
-    if [[ ${name} =~ ^(BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_CACHE_ON_[0-9]+) ]] ; then
-      sums="${sums}$(sha1sum "${!name}")"
+  read_list_property 'BUILD_ARGS'
+  for arg in ${result[@]+"${result[@]}"}; do
+    # include underlying environment variable
+    if [[ ${arg} != *=* ]]; then
+      arg+="=${!arg:-}"
     fi
-  done < <(env | sort)
+
+    sums+="$(echo "${arg}" | sha1sum)"
+  done
+
+  read_list_property 'CACHE_ON'
+  for file in ${result[@]+"${result[@]}"}; do
+    sums+="$(sha1sum "${file}")"
+  done
+
   echo "${sums}" | sha1sum | cut -c-7
 }
 
@@ -52,9 +88,18 @@ if [[ -n ${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET:-} ]]; then
   target_args+=('--target' "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET}")
 fi
 
+build_args=()
+read_build_args
+
 if ! docker pull "${image}:${tag}"; then
   echo '--- Building image'
-  docker build . --file "${docker_file}" --tag "${image}:${tag}" "${target_args[@]}" || exit 1
+  docker build \
+  --file "${docker_file}" \
+  --tag "${image}:${tag}" \
+  ${build_args[@]+"${build_args[@]}"} \
+  ${target_args[@]+"${target_args[@]}"} \
+  . || exit 1
+
   docker tag "${image}:${tag}" "${image}:latest"
 
   echo "--- Pushing tag ${tag}"

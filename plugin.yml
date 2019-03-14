@@ -1,14 +1,16 @@
-name: docker-ecr-cache
-description: Plugin for building and caching images to AWS ECR
+name: Docker ECR Cache
+description: Cache Docker images in Amazon ECR
 author: https://github.com/seek-oss
 requirements:
   - docker
 configuration:
   properties:
+    build-args:
+      type: [array, string]
+    cache-on:
+      type: [array, string]
     dockerfile:
       type: string
-    cache-on:
-      type: array
     ecr-name:
       type: string
     target:
