@@ -49,8 +49,6 @@ read_list_property() {
       result+=("${!item_name}")
     fi
   done < <(env | sort)
-
-  [[ ${#result[@]} -gt 0 ]] || return 1
 }
 
 compute_tag() {
