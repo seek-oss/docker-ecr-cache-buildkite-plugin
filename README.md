@@ -27,7 +27,7 @@ RUN echo "my expensive build step"
 steps:
   - command: 'echo wow'
     plugins:
-      - seek-oss/docker-ecr-cache#v1.1.3
+      - seek-oss/docker-ecr-cache#v1.1.4
       - docker#v3.0.1
 ```
 
@@ -52,7 +52,7 @@ RUN npm install
 steps:
   - command: 'npm test'
     plugins:
-      - seek-oss/docker-ecr-cache#v1.1.3:
+      - seek-oss/docker-ecr-cache#v1.1.4:
           cache-on:
             - package-lock.json
       - docker#v3.0.1:
@@ -68,7 +68,7 @@ It's possible to specify the Dockerfile to use by:
 steps:
   - command: 'echo wow'
     plugins:
-      - seek-oss/docker-ecr-cache#v1.1.3:
+      - seek-oss/docker-ecr-cache#v1.1.4:
           dockerfile: my-dockerfile
       - docker#v3.0.1
 ```
@@ -87,7 +87,7 @@ stage to run commands against:
 steps:
   - command: 'cargo test'
     plugins:
-      - seek-oss/docker-ecr-cache#v1.1.3:
+      - seek-oss/docker-ecr-cache#v1.1.4:
           target: build-deps
       - docker#v3.0.1
 ```
@@ -115,12 +115,45 @@ steps:
     env:
       ARG_1: wow
     plugins:
-      - seek-oss/docker-ecr-cache#v1.1.3:
+      - seek-oss/docker-ecr-cache#v1.1.4:
           build-args:
             - ARG_1
             - ARG_2=such
       - docker#v3.0.1
 ```
+
+### Specifying an ECR repository name
+
+The plugin pushes and pulls Docker images to and from an ECR repository named
+`build-cache/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}`. You can
+optionally use a custom repository name:
+
+```yaml
+steps:
+  - command: 'echo wow'
+    plugins:
+      - seek-oss/docker-ecr-cache#v1.1.4:
+          ecr-name: my-unique-repository-name
+      - docker#v3.0.1
+```
+
+## Design
+
+The plugin derives a checksum from:
+
+- The argument names and values specified in the `build-args` property
+- The files specified in the `cache-on` and `dockerfile` properties
+
+This checksum is used as the Docker image tag to find and pull an existing
+cached image from ECR, or to build and push a new image for subsequent builds to
+use.
+
+The plugin handles the creation of a dedicated ECR repository for the pipeline
+it runs in. To save on [ECR storage costs], a [lifecycle policy] is
+automatically applied to limit the repository to the last 10 pushed images.
+
+[ecr storage costs]: https://aws.amazon.com/ecr/pricing/
+[lifecycle policy]: https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html
 
 ## License
 

@@ -23,6 +23,12 @@ upsert_ecr() {
   if ! ecr_exists "${repository_name}"; then
     aws ecr create-repository --repository-name "${repository_name}"
   fi
+
+  dir="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
+
+  aws ecr put-lifecycle-policy \
+  --repository-name "${repository_name}" \
+  --lifecycle-policy-text "file://${dir}/../ecr/lifecycle-policy.json"
 }
 
 read_build_args() {
