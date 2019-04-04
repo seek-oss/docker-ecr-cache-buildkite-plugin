@@ -26,9 +26,14 @@ upsert_ecr() {
 
   dir="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
 
+  # Always set the lifecycle policy to update repositories automatically
+  # created before PR #9.
+  #
+  # When using a custom repository with a restricted Buildkite role this might
+  # not succeed. Ignore the error and let the build continue.
   aws ecr put-lifecycle-policy \
   --repository-name "${repository_name}" \
-  --lifecycle-policy-text "file://${dir}/../ecr/lifecycle-policy.json"
+  --lifecycle-policy-text "file://${dir}/../ecr/lifecycle-policy.json" || true
 }
 
 read_build_args() {
