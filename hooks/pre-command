@@ -93,6 +93,7 @@ upsert_ecr "${repository_name}"
 docker_file="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-Dockerfile}"
 image="$(get_ecr_url "${repository_name}")"
 tag="$(compute_tag "${docker_file}")"
+context=$(dirname "${docker_file}")
 
 target_args=()
 if [[ -n ${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET:-} ]]; then
@@ -109,7 +110,7 @@ if ! docker pull "${image}:${tag}"; then
   --tag "${image}:${tag}" \
   ${build_args[@]+"${build_args[@]}"} \
   ${target_args[@]+"${target_args[@]}"} \
-  . || exit 1
+  "${context}" || exit 1
 
   docker tag "${image}:${tag}" "${image}:latest"
 

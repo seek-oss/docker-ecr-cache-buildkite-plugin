@@ -27,7 +27,7 @@ RUN echo "my expensive build step"
 steps:
   - command: 'echo wow'
     plugins:
-      - seek-oss/docker-ecr-cache#v1.1.5
+      - seek-oss/docker-ecr-cache#v1.1.6
       - docker#v3.0.1
 ```
 
@@ -52,7 +52,7 @@ RUN npm install
 steps:
   - command: 'npm test'
     plugins:
-      - seek-oss/docker-ecr-cache#v1.1.5:
+      - seek-oss/docker-ecr-cache#v1.1.6:
           cache-on:
             - package-lock.json
       - docker#v3.0.1:
@@ -68,10 +68,12 @@ It's possible to specify the Dockerfile to use by:
 steps:
   - command: 'echo wow'
     plugins:
-      - seek-oss/docker-ecr-cache#v1.1.5:
+      - seek-oss/docker-ecr-cache#v1.1.6:
           dockerfile: my-dockerfile
       - docker#v3.0.1
 ```
+
+The subdirectory containing the Dockerfile is the path used for the build's context.
 
 ### Specifying a target step
 
@@ -87,7 +89,7 @@ stage to run commands against:
 steps:
   - command: 'cargo test'
     plugins:
-      - seek-oss/docker-ecr-cache#v1.1.5:
+      - seek-oss/docker-ecr-cache#v1.1.6:
           target: build-deps
       - docker#v3.0.1
 ```
@@ -115,7 +117,7 @@ steps:
     env:
       ARG_1: wow
     plugins:
-      - seek-oss/docker-ecr-cache#v1.1.5:
+      - seek-oss/docker-ecr-cache#v1.1.6:
           build-args:
             - ARG_1
             - ARG_2=such
@@ -132,7 +134,7 @@ optionally use a custom repository name:
 steps:
   - command: 'echo wow'
     plugins:
-      - seek-oss/docker-ecr-cache#v1.1.5:
+      - seek-oss/docker-ecr-cache#v1.1.6:
           ecr-name: my-unique-repository-name
       - docker#v3.0.1
 ```
