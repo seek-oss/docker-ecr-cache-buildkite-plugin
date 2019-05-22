@@ -25,23 +25,13 @@ upsert_ecr() {
     aws ecr create-repository --repository-name "${repository_name}"
   fi
 
+  # As of May 2019 ECR lifecycle policies can only have one rule that targets "any"
+  # Due to this limitation, only the max_age policy is applied
   policy_text=$(cat <<EOF
 {
   "rules": [
     {
       "rulePriority": 1,
-      "description": "Keep up to 10 total images",
-      "selection": {
-        "tagStatus": "any",
-        "countType": "imageCountMoreThan",
-        "countNumber": 10
-      },
-      "action": {
-        "type": "expire"
-      }
-    },
-    {
-      "rulePriority": 2,
       "description": "Expire images older than ${max_age_days} days",
       "selection": {
         "tagStatus": "any",
