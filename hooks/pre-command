@@ -25,6 +25,8 @@ upsert_ecr() {
     aws ecr create-repository --repository-name "${repository_name}"
   fi
 
+  # As of May 2019 ECR lifecycle policies can only have one rule that targets "any"
+  # The expire-* tag is to work around this limitation
   policy_text=$(cat <<EOF
 {
   "rules": [
@@ -44,7 +46,8 @@ upsert_ecr() {
       "rulePriority": 2,
       "description": "Expire images older than ${max_age_days} days",
       "selection": {
-        "tagStatus": "any",
+        "tagStatus": "tagged",
+        "tagPrefixList": ["expire-"],
         "countType": "sinceImagePushed",
         "countUnit": "days",
         "countNumber": ${max_age_days}
@@ -147,8 +150,17 @@ if ! docker pull "${image}:${tag}"; then
 
   docker tag "${image}:${tag}" "${image}:latest"
 
+  # tag the image with an expire- prefix so the lifecycle policy will fire
+  max_age_seconds=$(($max_age_days * 86400))
+  expiry_seconds=$(($(date +%s) + $max_age_seconds))
+  expire_tag="expire-${expiry_seconds}"
+  docker tag "${image}:${tag}" "${image}:${expire_tag}"
+
   echo "--- Pushing tag ${tag}"
   docker push "${image}:${tag}"
+
+  echo "--- Pushing tag ${expire_tag}"
+  docker push "${image}:${expire_tag}"
 
   echo "--- Pushing tag latest"
   docker push "${image}:latest"
