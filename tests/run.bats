@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
-export AWS_STUB_DEBUG=/dev/tty
-export DOCKER_STUB_DEBUG=/dev/tty
+# export AWS_STUB_DEBUG=/dev/tty
+# export DOCKER_STUB_DEBUG=/dev/tty
 
 load "$BATS_PATH/load.bash"
 
