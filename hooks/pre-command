@@ -26,7 +26,7 @@ upsert_ecr() {
   fi
 
   # As of May 2019 ECR lifecycle policies can only have one rule that targets "any"
-  # The hash-* tag is to work around this limitation
+  # Due to this limitation, only the max_age policy is applied
   policy_text=$(cat <<EOF
 {
   "rules": [
@@ -42,20 +42,7 @@ upsert_ecr() {
       "action": {
         "type": "expire"
       }
-    },
-    {
-      "rulePriority": 2,
-      "description": "Keep up to 10 total images",
-      "selection": {
-        "tagStatus": "tagged",
-        "tagPrefixList": ["hash-"],
-        "countType": "imageCountMoreThan",
-        "countNumber": 10
-      },
-      "action": {
-        "type": "expire"
-      }
-    },
+    }
   ]
 }
 EOF
@@ -128,7 +115,7 @@ max_age_days="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_MAX_AGE_DAYS:-30}"
 upsert_ecr "${repository_name}" "${max_age_days}"
 docker_file="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-Dockerfile}"
 image="$(get_ecr_url "${repository_name}")"
-tag="hash-$(compute_tag "${docker_file}")"
+tag="$(compute_tag "${docker_file}")"
 context=$(dirname "${docker_file}")
 
 target_args=()

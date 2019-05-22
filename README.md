@@ -164,8 +164,8 @@ cached image from ECR, or to build and push a new image for subsequent builds to
 use.
 
 The plugin handles the creation of a dedicated ECR repository for the pipeline
-it runs in. To save on [ECR storage costs], a [lifecycle policy] is
-automatically applied to limit the repository to the last 10 pushed images. By default, images will remain cached for up to 30 days so that images get a chance to apply patches.
+it runs in. To save on [ECR storage costs] and give images a chance to update/patch, a [lifecycle policy] is
+automatically applied to expire images after 30 days (configurable via `max-age-days`).
 
 [ecr storage costs]: https://aws.amazon.com/ecr/pricing/
 [lifecycle policy]: https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html
