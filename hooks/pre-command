@@ -26,28 +26,15 @@ upsert_ecr() {
   fi
 
   # As of May 2019 ECR lifecycle policies can only have one rule that targets "any"
-  # The expire-* tag is to work around this limitation
+  # The hash-* tag is to work around this limitation
   policy_text=$(cat <<EOF
 {
   "rules": [
     {
       "rulePriority": 1,
-      "description": "Keep up to 10 total images",
-      "selection": {
-        "tagStatus": "any",
-        "countType": "imageCountMoreThan",
-        "countNumber": 10
-      },
-      "action": {
-        "type": "expire"
-      }
-    },
-    {
-      "rulePriority": 2,
       "description": "Expire images older than ${max_age_days} days",
       "selection": {
-        "tagStatus": "tagged",
-        "tagPrefixList": ["expire-"],
+        "tagStatus": "any",
         "countType": "sinceImagePushed",
         "countUnit": "days",
         "countNumber": ${max_age_days}
@@ -55,7 +42,20 @@ upsert_ecr() {
       "action": {
         "type": "expire"
       }
-    }
+    },
+    {
+      "rulePriority": 2,
+      "description": "Keep up to 10 total images",
+      "selection": {
+        "tagStatus": "tagged",
+        "tagPrefixList": ["hash-"],
+        "countType": "imageCountMoreThan",
+        "countNumber": 10
+      },
+      "action": {
+        "type": "expire"
+      }
+    },
   ]
 }
 EOF
@@ -128,7 +128,7 @@ max_age_days="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_MAX_AGE_DAYS:-30}"
 upsert_ecr "${repository_name}" "${max_age_days}"
 docker_file="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-Dockerfile}"
 image="$(get_ecr_url "${repository_name}")"
-tag="$(compute_tag "${docker_file}")"
+tag="hash-$(compute_tag "${docker_file}")"
 context=$(dirname "${docker_file}")
 
 target_args=()
@@ -150,17 +150,8 @@ if ! docker pull "${image}:${tag}"; then
 
   docker tag "${image}:${tag}" "${image}:latest"
 
-  # tag the image with an expire- prefix so the lifecycle policy will fire
-  max_age_seconds=$(($max_age_days * 86400))
-  expiry_seconds=$(($(date +%s) + $max_age_seconds))
-  expire_tag="expire-${expiry_seconds}"
-  docker tag "${image}:${tag}" "${image}:${expire_tag}"
-
   echo "--- Pushing tag ${tag}"
   docker push "${image}:${tag}"
-
-  echo "--- Pushing tag ${expire_tag}"
-  docker push "${image}:${expire_tag}"
 
   echo "--- Pushing tag latest"
   docker push "${image}:latest"

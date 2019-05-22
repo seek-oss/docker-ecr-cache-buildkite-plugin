@@ -55,10 +55,8 @@ pre_command_hook="$PWD/hooks/pre-command"
     "login -u AWS -p 1234 https://1234567891012.dkr.ecr.ap-southeast-2.amazonaws.com : echo logging in to docker" \
     "pull : echo not found && false" \
     "build * : echo building docker image" \
-    "tag ${repository_uri}:deadbee ${repository_uri}:latest : echo tagged latest" \
-    "tag ${repository_uri}:deadbee * : echo tagged expire" \
-    "push ${repository_uri}:deadbee : echo pushed deadbeef" \
-    "push * : echo pushed expire" \
+    "tag ${repository_uri}:hash-deadbee ${repository_uri}:latest : echo tagged latest" \
+    "push ${repository_uri}:hash-deadbee : echo pushed deadbeef" \
     "push ${repository_uri}:latest : echo pushed latest"
 
   stub sha1sum \
@@ -73,10 +71,8 @@ pre_command_hook="$PWD/hooks/pre-command"
   assert_output --partial "building docker image"
   assert_output --partial "put lifecycle policy"
   assert_output --partial "tagged latest"
-  assert_output --partial "tagged expire"
   assert_output --partial "pushed deadbeef"
   assert_output --partial "pushed latest"
-  assert_output --partial "pushed expire"
 
   unstub aws
   unstub docker
