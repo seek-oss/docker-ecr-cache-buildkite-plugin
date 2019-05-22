@@ -139,6 +139,19 @@ steps:
       - docker#v3.0.1
 ```
 
+### Changing the max cache time
+
+By default images are kept in ECR for up to 30 days. This can be changed by specifying a `max-age-days` parameter:
+
+```yaml
+steps:
+  - command: 'echo wow'
+    plugins:
+      - seek-oss/docker-ecr-cache#v1.1.6:
+          max-age-days: 7
+      - docker#v3.0.1
+```
+
 ## Design
 
 The plugin derives a checksum from:
@@ -152,10 +165,18 @@ use.
 
 The plugin handles the creation of a dedicated ECR repository for the pipeline
 it runs in. To save on [ECR storage costs], a [lifecycle policy] is
-automatically applied to limit the repository to the last 10 pushed images.
+automatically applied to limit the repository to the last 10 pushed images. By default, images will remain cached for up to 30 days so that images get a chance to apply patches.
 
 [ecr storage costs]: https://aws.amazon.com/ecr/pricing/
 [lifecycle policy]: https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html
+
+## Tests
+
+To run the tests of this plugin, run
+
+```
+docker-compose run --rm tests
+```
 
 ## License
 
