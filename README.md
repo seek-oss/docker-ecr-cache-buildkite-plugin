@@ -174,6 +174,14 @@ automatically applied to limit the repository to the last 10 pushed images.
 [ecr storage costs]: https://aws.amazon.com/ecr/pricing/
 [lifecycle policy]: https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html
 
+# Tests
+
+To run the tests of this plugin, run
+
+```
+docker-compose run --rm tests
+```
+
 ## License
 
 MIT (see [LICENSE](LICENSE))
