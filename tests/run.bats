@@ -35,5 +35,6 @@ pre_command_hook="$PWD/hooks/pre-command"
 
   unstub aws
   unstub docker
+  unstub sha1sum
 }
 
