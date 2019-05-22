@@ -13,10 +13,6 @@ as changes are made to your containers.
 An ECR repository to store the built Docker image will be created for you, if
 one doesn't already exist.
 
-This plugin sets the ECR lifecycle policy to ensure that only 10 images are stored. Additionally, images
-older than 30 days will automatically expire. Automatically expiring images ensures the cache remains somewhat 
-up-to-date with patches.
-
 ## Example
 
 ### Basic usage
@@ -169,7 +165,7 @@ use.
 
 The plugin handles the creation of a dedicated ECR repository for the pipeline
 it runs in. To save on [ECR storage costs], a [lifecycle policy] is
-automatically applied to limit the repository to the last 10 pushed images.
+automatically applied to limit the repository to the last 10 pushed images. By default, images will remain cached for up to 30 days so that images get a chance to apply patches.
 
 [ecr storage costs]: https://aws.amazon.com/ecr/pricing/
 [lifecycle policy]: https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html
