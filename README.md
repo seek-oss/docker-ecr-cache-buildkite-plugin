@@ -13,6 +13,10 @@ as changes are made to your containers.
 An ECR repository to store the built Docker image will be created for you, if
 one doesn't already exist.
 
+This plugin sets the ECR lifecycle policy to ensure that only 10 images are stored. Additionally, images
+older than 30 days will automatically expire. Automatically expiring images ensures the cache remains somewhat 
+up-to-date with patches.
+
 ## Example
 
 ### Basic usage
@@ -136,6 +140,19 @@ steps:
     plugins:
       - seek-oss/docker-ecr-cache#v1.1.6:
           ecr-name: my-unique-repository-name
+      - docker#v3.0.1
+```
+
+### Changing the max cache time
+
+By default images are kept in ECR for up to 30 days. This can be changed by specifying a `max-age-days` parameter:
+
+```yaml
+steps:
+  - command: 'echo wow'
+    plugins:
+      - seek-oss/docker-ecr-cache#v1.1.6:
+          max-age-days: 7
       - docker#v3.0.1
 ```
 

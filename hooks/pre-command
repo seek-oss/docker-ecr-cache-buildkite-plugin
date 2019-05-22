@@ -20,11 +20,43 @@ ecr_exists() {
 
 upsert_ecr() {
   local repository_name="${1}"
+  local max_age_days="${2}"
   if ! ecr_exists "${repository_name}"; then
     aws ecr create-repository --repository-name "${repository_name}"
   fi
 
-  dir="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
+  policy_text=$(cat <<EOF
+{
+  "rules": [
+    {
+      "rulePriority": 1,
+      "description": "Keep up to 10 total images",
+      "selection": {
+        "tagStatus": "any",
+        "countType": "imageCountMoreThan",
+        "countNumber": 10
+      },
+      "action": {
+        "type": "expire"
+      }
+    },
+    {
+      "rulePriority": 2,
+      "description": "Expire images older than ${max_age_days} days",
+      "selection": {
+        "tagStatus": "any",
+        "countType": "sinceImagePushed",
+        "countUnit": "days",
+        "countNumber": ${max_age_days}
+      },
+      "action": {
+        "type": "expire"
+      }
+    }
+  ]
+}
+EOF
+)
 
   # Always set the lifecycle policy to update repositories automatically
   # created before PR #9.
@@ -33,7 +65,7 @@ upsert_ecr() {
   # not succeed. Ignore the error and let the build continue.
   aws ecr put-lifecycle-policy \
   --repository-name "${repository_name}" \
-  --lifecycle-policy-text "file://${dir}/../ecr/lifecycle-policy.json" || true
+  --lifecycle-policy-text "${policy_text}" || true
 }
 
 read_build_args() {
@@ -89,7 +121,8 @@ compute_tag() {
 $(aws ecr get-login --no-include-email)
 default_repository_name="build-cache/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}"
 repository_name="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_NAME:-${default_repository_name}}"
-upsert_ecr "${repository_name}"
+max_age_days="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_MAX_AGE_DAYS:-30}"
+upsert_ecr "${repository_name}" "${max_age_days}"
 docker_file="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-Dockerfile}"
 image="$(get_ecr_url "${repository_name}")"
 tag="$(compute_tag "${docker_file}")"
