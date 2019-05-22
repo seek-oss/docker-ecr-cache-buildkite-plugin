@@ -27,7 +27,7 @@ RUN echo "my expensive build step"
 steps:
   - command: 'echo wow'
     plugins:
-      - seek-oss/docker-ecr-cache#v1.2.0
+      - seek-oss/docker-ecr-cache#v1.3.0
       - docker#v3.0.1
 ```
 
@@ -52,7 +52,7 @@ RUN npm install
 steps:
   - command: 'npm test'
     plugins:
-      - seek-oss/docker-ecr-cache#v1.2.0:
+      - seek-oss/docker-ecr-cache#v1.3.0:
           cache-on:
             - package-lock.json
       - docker#v3.0.1:
@@ -68,7 +68,7 @@ It's possible to specify the Dockerfile to use by:
 steps:
   - command: 'echo wow'
     plugins:
-      - seek-oss/docker-ecr-cache#v1.2.0:
+      - seek-oss/docker-ecr-cache#v1.3.0:
           dockerfile: my-dockerfile
       - docker#v3.0.1
 ```
@@ -89,7 +89,7 @@ stage to run commands against:
 steps:
   - command: 'cargo test'
     plugins:
-      - seek-oss/docker-ecr-cache#v1.2.0:
+      - seek-oss/docker-ecr-cache#v1.3.0:
           target: build-deps
       - docker#v3.0.1
 ```
@@ -117,7 +117,7 @@ steps:
     env:
       ARG_1: wow
     plugins:
-      - seek-oss/docker-ecr-cache#v1.2.0:
+      - seek-oss/docker-ecr-cache#v1.3.0:
           build-args:
             - ARG_1
             - ARG_2=such
@@ -134,7 +134,7 @@ optionally use a custom repository name:
 steps:
   - command: 'echo wow'
     plugins:
-      - seek-oss/docker-ecr-cache#v1.2.0:
+      - seek-oss/docker-ecr-cache#v1.3.0:
           ecr-name: my-unique-repository-name
       - docker#v3.0.1
 ```
@@ -147,7 +147,7 @@ By default images are kept in ECR for up to 30 days. This can be changed by spec
 steps:
   - command: 'echo wow'
     plugins:
-      - seek-oss/docker-ecr-cache#v1.2.0:
+      - seek-oss/docker-ecr-cache#v1.3.0:
           max-age-days: 7
       - docker#v3.0.1
 ```
