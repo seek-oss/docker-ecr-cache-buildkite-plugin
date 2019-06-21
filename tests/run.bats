@@ -24,6 +24,8 @@ pre_command_hook="$PWD/hooks/pre-command"
 
   stub sha1sum \
     "Dockerfile : echo 'sha1sum(Dockerfile)'" \
+    ": echo sha1sum" \
+    ": echo sha1sum" \
     ": echo sha1sum"
 
   run "${pre_command_hook}"
@@ -61,6 +63,8 @@ pre_command_hook="$PWD/hooks/pre-command"
 
   stub sha1sum \
     "Dockerfile : echo 'sha1sum(Dockerfile)'" \
+    ": echo sha1sum" \
+    ": echo sha1sum" \
     ": echo deadbeef"
 
   run "${pre_command_hook}"
