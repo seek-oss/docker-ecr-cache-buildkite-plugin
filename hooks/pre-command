@@ -89,6 +89,8 @@ compute_tag() {
   local sums
 
   sums="$(sha1sum "${docker_file}")"
+  sums+="$(echo "${target}" | sha1sum)"
+  sums+="$(uname -m | sha1sum)"
 
   read_list_property 'BUILD_ARGS'
   for arg in ${result[@]+"${result[@]}"}; do
@@ -114,13 +116,14 @@ repository_name="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_NAME:-${default_reposit
 max_age_days="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_MAX_AGE_DAYS:-30}"
 upsert_ecr "${repository_name}" "${max_age_days}"
 docker_file="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-Dockerfile}"
+target="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET:-}"
 image="$(get_ecr_url "${repository_name}")"
 tag="$(compute_tag "${docker_file}")"
 context=$(dirname "${docker_file}")
 
 target_args=()
-if [[ -n ${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET:-} ]]; then
-  target_args+=('--target' "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET}")
+if [[ -n ${target} ]]; then
+  target_args+=('--target' "${target}")
 fi
 
 build_args=()
