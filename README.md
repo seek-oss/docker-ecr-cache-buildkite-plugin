@@ -124,6 +124,19 @@ steps:
       - docker#v3.0.1
 ```
 
+Additional `docker build` arguments be passed via the `additional-build-args` setting:
+
+```yaml
+steps:
+  - command: 'echo amaze'
+    env:
+      ARG_1: wow
+    plugins:
+      - seek-oss/docker-ecr-cache#v1.3.0:
+          additional-build-args: '--ssh= default=\$SSH_AUTH_SOCK'
+      - docker#v3.0.1
+```
+
 ### Specifying an ECR repository name
 
 The plugin pushes and pulls Docker images to and from an ECR repository named

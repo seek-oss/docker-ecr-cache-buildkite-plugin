@@ -134,6 +134,7 @@ if ! docker pull "${image}:${tag}"; then
   docker build \
   --file "${docker_file}" \
   --tag "${image}:${tag}" \
+  ${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ADDITIONAL_BUILD_ARGS:-} \
   ${build_args[@]+"${build_args[@]}"} \
   ${target_args[@]+"${target_args[@]}"} \
   "${context}" || exit 1
