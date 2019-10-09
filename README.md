@@ -60,6 +60,21 @@ steps:
             - /workdir/node_modules
 ```
 
+The `cache-on` property also supports Bash globbing with `globstar`:
+
+```yaml
+steps:
+  - command: 'npm test'
+    plugins:
+      - seek-oss/docker-ecr-cache#v1.1.5:
+          cache-on:
+            - '**/package.json' # monorepo with multiple manifest files
+            - yarn.lock
+      - docker#v3.0.1:
+          volumes:
+            - /workdir/node_modules
+```
+
 ### Using another Dockerfile
 
 It's possible to specify the Dockerfile to use by:

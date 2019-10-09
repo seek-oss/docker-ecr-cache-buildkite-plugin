@@ -114,11 +114,17 @@ compute_tag() {
     sums+="$(echo "${arg}" | sha1sum)"
   done
 
+  # expand ** in cache-on properties
+  shopt -s globstar
+
   echoerr 'CACHE_ON'
   read_list_property 'CACHE_ON'
-  for file in ${result[@]+"${result[@]}"}; do
-    echoerr "+ ${file}"
-    sums+="$(sha1sum "${file}")"
+  for glob in ${result[@]+"${result[@]}"}; do
+    echoerr "${glob}"
+    for file in ${glob}; do
+      echoerr "+ ${file}"
+      sums+="$(sha1sum "${file}")"
+    done
   done
 
   echo "${sums}" | sha1sum | cut -c-7
