@@ -19,4 +19,6 @@ configuration:
       type: string
     max-age-days:
       type: number
+    export-env-variable:
+      type: string
   required: []
