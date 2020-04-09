@@ -54,7 +54,7 @@ get_ecr_tags() {
 upsert_ecr() {
   local repository_name="${1}"
   local max_age_days="${2}"
-  local ecr_tags="$(get_ecr_tags "${ecr_arn}")"
+  local ecr_tags="$(get_ecr_tags)"
 
   if ! ecr_exists "${repository_name}"; then
     aws ecr create-repository --repository-name "${repository_name}" --tags "${ecr_tags}"
