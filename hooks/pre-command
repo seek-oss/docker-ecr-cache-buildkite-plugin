@@ -21,8 +21,10 @@ ecr_exists() {
 upsert_ecr() {
   local repository_name="${1}"
   local max_age_days="${2}"
+  local ecr_tags="${3}"
+
   if ! ecr_exists "${repository_name}"; then
-    aws ecr create-repository --repository-name "${repository_name}"
+    aws ecr create-repository --repository-name "${repository_name}" --tags "${ecr_tags}"
   fi
 
   # As of May 2019 ECR lifecycle policies can only have one rule that targets "any"
@@ -134,7 +136,8 @@ $(aws ecr get-login --no-include-email)
 default_repository_name="build-cache/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}"
 repository_name="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_NAME:-${default_repository_name}}"
 max_age_days="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_MAX_AGE_DAYS:-30}"
-upsert_ecr "${repository_name}" "${max_age_days}"
+ecr_tags="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_TAGS}"
+upsert_ecr "${repository_name}" "${max_age_days}" "${ecr_tags}"
 docker_file="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-Dockerfile}"
 target="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET:-}"
 image="$(get_ecr_url "${repository_name}")"
