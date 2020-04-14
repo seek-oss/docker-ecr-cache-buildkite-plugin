@@ -29,6 +29,7 @@ get_ecr_arn() {
 get_ecr_tags() {
   local result=""
   env
+  echo "get_ecr_tags"
   while IFS='=' read -r name _ ; do
     echo "======"
     echo $name
