@@ -4,6 +4,9 @@ services:
     image: buildkite/plugin-tester
     volumes:
       - ".:/plugin:ro"
+    environment:
+      - BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_TAGS_MYKEY=mykeyvalue
+      - BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_TAGS_MYKEY2=mykeyvalue2
   lint:
     image: buildkite/plugin-linter
     command: ['--name', 'seek-oss/docker-ecr-cache']
