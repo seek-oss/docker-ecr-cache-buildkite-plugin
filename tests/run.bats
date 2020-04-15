@@ -15,9 +15,10 @@ pre_command_hook="$PWD/hooks/pre-command"
   stub aws \
     "ecr get-login --no-include-email : echo docker login -u AWS -p 1234 https://1234567891012.dkr.ecr.ap-southeast-2.amazonaws.com" \
     "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].registryId : echo looked up repository" \
+    "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].repositoryArn : echo arn:aws:ecr:ap-southeast-2:1234567891012:repository/${expected_repository_name}" \
+    "ecr tag-resource * : echo tag existing resource" \
     "ecr put-lifecycle-policy * : echo put lifecycle policy" \
     "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].repositoryUri : echo https://1234567891012.dkr.ecr.ap-southeast-2.amazonaws.com"
-
   stub docker \
     "login -u AWS -p 1234 https://1234567891012.dkr.ecr.ap-southeast-2.amazonaws.com : echo logging in to docker" \
     "pull : echo pulled image"
@@ -34,6 +35,7 @@ pre_command_hook="$PWD/hooks/pre-command"
   assert_output --partial "logging in to docker"
   assert_output --partial "pulled image"
   assert_output --partial "looked up repository"
+  assert_output --partial "tag existing resource"
   assert_output --partial "put lifecycle policy"
 
   unstub aws
@@ -50,9 +52,10 @@ pre_command_hook="$PWD/hooks/pre-command"
   stub aws \
     "ecr get-login --no-include-email : echo docker login -u AWS -p 1234 https://1234567891012.dkr.ecr.ap-southeast-2.amazonaws.com" \
     "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].registryId : echo looked up repository" \
+    "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].repositoryArn : echo arn:aws:ecr:ap-southeast-2:1234567891012:repository/${expected_repository_name}" \
+    "ecr tag-resource * : echo tag existing resource" \
     "ecr put-lifecycle-policy * : echo put lifecycle policy" \
     "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].repositoryUri : echo ${repository_uri}"
-
   stub docker \
     "login -u AWS -p 1234 https://1234567891012.dkr.ecr.ap-southeast-2.amazonaws.com : echo logging in to docker" \
     "pull : echo not found && false" \
@@ -73,6 +76,7 @@ pre_command_hook="$PWD/hooks/pre-command"
   assert_output --partial "logging in to docker"
   assert_output --partial "looked up repository"
   assert_output --partial "building docker image"
+  assert_output --partial "tag existing resource"
   assert_output --partial "put lifecycle policy"
   assert_output --partial "tagged latest"
   assert_output --partial "pushed deadbeef"

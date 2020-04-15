@@ -164,6 +164,9 @@ steps:
     plugins:
       - seek-oss/docker-ecr-cache#v1.5.0:
           ecr-name: my-unique-repository-name
+          ecr-tags: 
+            Key: Value
+            Key2: Value2
       - docker#v3.3.0
 ```
 

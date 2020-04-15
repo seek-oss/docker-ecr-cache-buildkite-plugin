@@ -15,6 +15,8 @@ configuration:
       type: string
     ecr-name:
       type: string
+    ecr-tags:
+      type: object
     target:
       type: string
     max-age-days:
