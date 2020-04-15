@@ -27,16 +27,20 @@ get_ecr_arn() {
 }
 
 get_ecr_tags() {
-  local result=""
+local result=$(cat <<EOF
+{
+    "tags": []
+}
+EOF
+)
   while IFS='=' read -r name _ ; do
     if [[ $name =~ ^(BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_TAGS_) ]] ; then
       # Handle plain key=value, e.g
       # ecr-tags:
       #   KEY_NAME: 'key-value'
       key_name=$(echo "${name}" | sed 's/^BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_TAGS_//')
-      key_value=$(env | grep "$name" | sed "s/^$name=//" | sed "s/[^a-zA-Z ]//g")
-      key_value_str="Key=${key_name},Value=\"${key_value}\""
-      result="${result} ${key_value_str}"
+      key_value=$(env | grep "$name" | sed "s/^$name=//")
+      result=$(echo $result | jq ".tags[.tags| length] |= . + {\"Key\": \"${key_name}\", \"Value\": \"${key_value}\"}")
     fi
   done < <(env | sort)
 
@@ -49,11 +53,11 @@ upsert_ecr() {
   local ecr_tags="$(get_ecr_tags)"
 
   if ! ecr_exists "${repository_name}"; then
-    eval aws ecr create-repository --repository-name "${repository_name}" --tags "${ecr_tags}"
+    aws ecr create-repository --repository-name "${repository_name}" --cli-input-json "${ecr_tags}"
   else
     if [ ! -z "$ecr_tags" ]; then
       local ecr_arn=$(get_ecr_arn "${repository_name}")
-      eval aws ecr tag-resource --resource-arn ${ecr_arn} --tags "${ecr_tags}"
+      aws ecr tag-resource --resource-arn ${ecr_arn} --cli-input-json "${ecr_tags}"
     fi
   fi
 
