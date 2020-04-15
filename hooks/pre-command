@@ -51,13 +51,14 @@ upsert_ecr() {
   local repository_name="${1}"
   local max_age_days="${2}"
   local ecr_tags="$(get_ecr_tags)"
+  echo $ecr_tags
 
   if ! ecr_exists "${repository_name}"; then
     aws ecr create-repository --repository-name "${repository_name}" --cli-input-json "${ecr_tags}"
   else
     if [ ! -z "$ecr_tags" ]; then
       local ecr_arn=$(get_ecr_arn "${repository_name}")
-      aws ecr tag-resource --resource-arn ${ecr_arn} --cli-input-json "${ecr_tags}"
+      aws ecr tag-resource --resource-arn ${ecr_arn} --cli-input-json "${ecr_tags}" --debug
     fi
   fi
 
