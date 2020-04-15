@@ -34,7 +34,7 @@ get_ecr_tags() {
       # ecr-tags:
       #   KEY_NAME: 'key-value'
       key_name=$(echo "${name}" | sed 's/^BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_TAGS_//')
-      key_value=$(env | grep "$name" | sed "s/^$name=//")
+      key_value=$(env | grep "$name" | sed "s/^$name=//" | sed "s/[^a-zA-Z ]//g")
       key_value_str="Key=${key_name},Value=\"${key_value}\""
       result="${result} ${key_value_str}"
     fi
@@ -49,11 +49,11 @@ upsert_ecr() {
   local ecr_tags="$(get_ecr_tags)"
 
   if ! ecr_exists "${repository_name}"; then
-    aws ecr create-repository --repository-name "${repository_name}" --tags "${ecr_tags}"
+    eval aws ecr create-repository --repository-name "${repository_name}" --tags "${ecr_tags}"
   else
     if [ ! -z "$ecr_tags" ]; then
       local ecr_arn=$(get_ecr_arn "${repository_name}")
-      aws ecr tag-resource --resource-arn ${ecr_arn} --tags "${ecr_tags}"
+      eval aws ecr tag-resource --resource-arn ${ecr_arn} --tags "${ecr_tags}"
     fi
   fi
 
