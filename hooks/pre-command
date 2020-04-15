@@ -35,7 +35,7 @@ get_ecr_tags() {
       #   KEY_NAME: 'key-value'
       key_name=$(echo "${name}" | sed 's/^BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_TAGS_//')
       key_value=$(env | grep "$name" | sed "s/^$name=//")
-      key_value_str="Key=${key_name},Value=${key_value}"
+      key_value_str="Key=${key_name},Value=\"${key_value}\""
       result="${result} ${key_value_str}"
     fi
   done < <(env | sort)
@@ -53,7 +53,7 @@ upsert_ecr() {
   else
     if [ ! -z "$ecr_tags" ]; then
       local ecr_arn=$(get_ecr_arn "${repository_name}")
-      aws ecr tag-resource --resource-arn ${ecr_arn} --tags ${ecr_tags}
+      aws ecr tag-resource --resource-arn ${ecr_arn} --tags "${ecr_tags}"
     fi
   fi
 
