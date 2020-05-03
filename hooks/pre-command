@@ -174,6 +174,7 @@ max_age_days="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_MAX_AGE_DAYS:-30}"
 upsert_ecr "${repository_name}" "${max_age_days}"
 docker_file="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-Dockerfile}"
 target="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET:-}"
+export_env_variable="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_EXPORT_ENV_VARIABLE:-"BUILDKITE_PLUGIN_DOCKER_IMAGE"}"
 image="$(get_ecr_url "${repository_name}")"
 exec 3>&1
 tag="$(compute_tag "${docker_file}" 2>&3)"
@@ -206,5 +207,5 @@ if ! docker pull "${image}:${tag}"; then
   docker push "${image}:latest"
 fi || echo "Not found"
 
-# Support using https://github.com/buildkite-plugins/docker-buildkite-plugin without an image
-export BUILDKITE_PLUGIN_DOCKER_IMAGE="${image}:${tag}"
+# Support using https://github.com/buildkite-plugins/docker-buildkite-plugin without an image by default
+export ${export_env_variable}="${image}:${tag}"

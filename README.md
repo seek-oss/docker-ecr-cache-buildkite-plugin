@@ -183,6 +183,19 @@ steps:
       - docker#v3.3.0
 ```
 
+### Changing the name of exported variable 
+
+By default image name and computed tag are exported to the Docker buildkite plugin env variable `BUILDKITE_PLUGIN_DOCKER_IMAGE`. In order to chain the plugin with a different plugin, this can be changed by specifying a `export-env-variable` parameter:
+
+```yaml
+steps:
+  - command: 'echo wow'
+    plugins:
+      - seek-oss/docker-ecr-cache#v1.6.0:
+          export-env-variable: BUILDKITE_PLUGIN_MY_CUSTOM_PLUGIN_CACHE_IMAGE
+      - my-custom-plugin#v1.0.0
+ ```
+
 ## Design
 
 The plugin derives a checksum from:
