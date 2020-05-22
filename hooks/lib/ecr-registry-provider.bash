@@ -48,9 +48,12 @@ EOF
   echo $result
 }
 
+default_ecr_repository_name() {
+  echo "build-cache/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}"
+}
+
 get_ecr_repository_name() {
-  default_repository_name="build-cache/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}"
-  echo "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_NAME:-${default_repository_name}}"
+  echo "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_NAME:-"$(default_ecr_repository_name)"}"
 }
 
 configure_registry_for_image_if_necessary() {
