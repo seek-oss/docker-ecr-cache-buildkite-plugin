@@ -3,7 +3,8 @@ login() {
 }
 
 get_registry_url() {
-  local repository_name="${1}"
+  local repository_name
+  repository_name="$(get_ecr_repository_name)"
   aws ecr describe-repositories \
     --repository-names "${repository_name}" \
     --output text \
@@ -47,9 +48,15 @@ EOF
   echo $result
 }
 
+get_ecr_repository_name() {
+  default_repository_name="build-cache/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}"
+  echo "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_NAME:-${default_repository_name}}"
+}
+
 configure_registry_for_image_if_necessary() {
-  local repository_name="${1}"
-  local max_age_days="${2}"
+  local repository_name
+  repository_name="$(get_ecr_repository_name)"
+  local max_age_days="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_MAX_AGE_DAYS:-30}"
   local ecr_tags="$(get_ecr_tags)"
   local num_tags=$(echo $ecr_tags | jq '.tags | length')
 
