@@ -1,99 +1,11 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
-
-get_ecr_url() {
-  local repository_name="${1}"
-  aws ecr describe-repositories \
-    --repository-names "${repository_name}" \
-    --output text \
-    --query 'repositories[0].repositoryUri'
-}
-
-ecr_exists() {
-  local repository_name="${1}"
-  aws ecr describe-repositories \
-    --repository-names "${repository_name}" \
-    --output text \
-    --query 'repositories[0].registryId'
-}
-
-get_ecr_arn() {
-  local repository_name="${1}"
-  aws ecr describe-repositories \
-    --repository-names "${repository_name}" \
-    --output text \
-    --query 'repositories[0].repositoryArn'
-}
-
-get_ecr_tags() {
-local result=$(cat <<EOF
-{
-    "tags": []
-}
-EOF
-)
-  while IFS='=' read -r name _ ; do
-    if [[ $name =~ ^(BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_TAGS_) ]] ; then
-      # Handle plain key=value, e.g
-      # ecr-tags:
-      #   KEY_NAME: 'key-value'
-      key_name=$(echo "${name}" | sed 's/^BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_TAGS_//')
-      key_value=$(env | grep "$name" | sed "s/^$name=//")
-      result=$(echo $result | jq ".tags[.tags| length] |= . + {\"Key\": \"${key_name}\", \"Value\": \"${key_value}\"}")
-    fi
-  done < <(env | sort)
-
-  echo $result
-}
-
-upsert_ecr() {
-  local repository_name="${1}"
-  local max_age_days="${2}"
-  local ecr_tags="$(get_ecr_tags)"
-  local num_tags=$(echo $ecr_tags | jq '.tags | length')
-
-  if ! ecr_exists "${repository_name}"; then
-    aws ecr create-repository --repository-name "${repository_name}" --cli-input-json "${ecr_tags}"
-  else
-    if [ "$num_tags" -gt 0 ]; then
-      local ecr_arn=$(get_ecr_arn "${repository_name}")
-      aws ecr tag-resource --resource-arn ${ecr_arn} --cli-input-json "${ecr_tags}"
-    fi
-  fi
-
-  # As of May 2019 ECR lifecycle policies can only have one rule that targets "any"
-  # Due to this limitation, only the max_age policy is applied
-  policy_text=$(cat <<EOF
-{
-  "rules": [
-    {
-      "rulePriority": 1,
-      "description": "Expire images older than ${max_age_days} days",
-      "selection": {
-        "tagStatus": "any",
-        "countType": "sinceImagePushed",
-        "countUnit": "days",
-        "countNumber": ${max_age_days}
-      },
-      "action": {
-        "type": "expire"
-      }
-    }
-  ]
-}
-EOF
-)
-
-  # Always set the lifecycle policy to update repositories automatically
-  # created before PR #9.
-  #
-  # When using a custom repository with a restricted Buildkite role this might
-  # not succeed. Ignore the error and let the build continue.
-  aws ecr put-lifecycle-policy \
-  --repository-name "${repository_name}" \
-  --lifecycle-policy-text "${policy_text}" || true
-}
+# shellcheck source=lib/stdlib.bash
+source "$(dirname "${BASH_SOURCE[0]}")/lib/stdlib.bash" || exit 67
+# shellcheck source=lib/ecr-registry-provider.bash
+source "$(dirname "${BASH_SOURCE[0]}")/lib/${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGISTRY_PROVIDER:-"ecr"}-registry-provider.bash" ||
+  log_fatal "Failed to source registry-provider. BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGISTRY_PROVIDER must be set to [ecr]" 67
 
 read_build_args() {
   read_list_property 'BUILD_ARGS'
@@ -167,15 +79,15 @@ compute_tag() {
   echo "${sums}" | sha1sum | cut -c-7
 }
 
-$(aws ecr get-login --no-include-email)
+login
 default_repository_name="build-cache/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}"
 repository_name="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_NAME:-${default_repository_name}}"
 max_age_days="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_MAX_AGE_DAYS:-30}"
-upsert_ecr "${repository_name}" "${max_age_days}"
+configure_registry_for_image_if_necessary "${repository_name}" "${max_age_days}"
 docker_file="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-Dockerfile}"
 target="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET:-}"
 export_env_variable="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_EXPORT_ENV_VARIABLE:-"BUILDKITE_PLUGIN_DOCKER_IMAGE"}"
-image="$(get_ecr_url "${repository_name}")"
+image="$(get_registry_url "${repository_name}")"
 exec 3>&1
 tag="$(compute_tag "${docker_file}" 2>&3)"
 context=$(dirname "${docker_file}")
@@ -191,9 +103,9 @@ read_build_args
 if ! docker pull "${image}:${tag}"; then
   echo '--- Building image'
   docker build \
-  --file "${docker_file}" \
-  --tag "${image}:${tag}" \
-  ${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ADDITIONAL_BUILD_ARGS:-} \
+  --file="${docker_file}" \
+  --tag="${image}:${tag}" \
+  "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ADDITIONAL_BUILD_ARGS:-}" \
   ${build_args[@]+"${build_args[@]}"} \
   ${target_args[@]+"${target_args[@]}"} \
   "${context}" || exit 1

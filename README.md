@@ -164,7 +164,7 @@ steps:
     plugins:
       - seek-oss/docker-ecr-cache#v1.7.0:
           ecr-name: my-unique-repository-name
-          ecr-tags: 
+          ecr-tags:
             Key: Value
             Key2: Value2
       - docker#v3.3.0
@@ -183,7 +183,7 @@ steps:
       - docker#v3.3.0
 ```
 
-### Changing the name of exported variable 
+### Changing the name of exported variable
 
 By default image name and computed tag are exported to the Docker buildkite plugin env variable `BUILDKITE_PLUGIN_DOCKER_IMAGE`. In order to chain the plugin with a different plugin, this can be changed by specifying a `export-env-variable` parameter:
 
@@ -218,7 +218,7 @@ automatically applied to expire images after 30 days (configurable via `max-age-
 
 To run the tests of this plugin, run
 
-```
+```bash
 docker-compose run --rm tests
 ```
 
