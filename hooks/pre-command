@@ -100,7 +100,7 @@ if ! docker pull "${image}:${tag}"; then
   echo '--- Building image'
   image_build_args=(
     "build"
-    "--file=$(basename "${docker_file}")"
+    "--file=${docker_file}"
     "--tag=${image}:${tag}"
     "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ADDITIONAL_BUILD_ARGS:-}"
   )
@@ -115,7 +115,7 @@ if ! docker pull "${image}:${tag}"; then
     )
   fi
 
-  echo "Inside $(pwd), running \`docker ${image_build_args[*]}\`"
+  echo "Inside $(pwd), running \`docker ${image_build_args[*]} ${context}\`"
   docker "${image_build_args[@]}" "${context}" || exit 1
 
   docker tag "${image}:${tag}" "${image}:latest"
