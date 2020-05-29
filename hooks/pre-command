@@ -98,17 +98,16 @@ read_build_args
 
 if ! docker pull "${image}:${tag}"; then
   echo '--- Building image'
-  docker_build_args=(
+  image_build_args=(
     "build"
     "--file=${docker_file}"
     "--tag=${image}:${tag}"
     "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ADDITIONAL_BUILD_ARGS:-}"
     ${build_args[@]+"${build_args[@]}"}
     ${target_args[@]+"${target_args[@]}"}
-    "${context}"
   )
-  echo "Inside $(pwd), running \`docker ${docker_build_args[*]}\`"
-  docker "${docker_build_args[@]}" || exit 1
+  echo "Inside $(pwd), running \`docker ${image_build_args[*]}\`"
+  docker "${image_build_args[@]}" "${context}" || exit 1
 
   docker tag "${image}:${tag}" "${image}:latest"
 
