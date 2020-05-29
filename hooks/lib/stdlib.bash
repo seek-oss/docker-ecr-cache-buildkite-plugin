@@ -1,5 +1,10 @@
+echoerr() {
+  echo "$@" 1>&2;
+}
+
 log_fatal() {
-  echo "${@}" 1>&2
+  echoerr "In $(pwd)"
+  echoerr "${@}"
   # use the last argument as the exit code
   exit_code="${*: -1}"
   if [[ "${exit_code}" =~ ^[\d]+$ ]]; then

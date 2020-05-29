@@ -37,8 +37,6 @@ compute_tag() {
   local docker_file="$1"
   local sums
 
-  echoerr() { echo "$@" 1>&2; }
-
   echoerr '--- Computing tag'
 
   echoerr 'DOCKERFILE'
