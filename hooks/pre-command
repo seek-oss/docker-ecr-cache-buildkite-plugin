@@ -81,7 +81,7 @@ login
 configure_registry_for_image_if_necessary
 image="$(get_registry_url)"
 docker_file="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-"Dockerfile"}"
-[[ ! -r "${docker_file}" ]] || log_fatal "dockerfile was not readable, looked in ${docker_file}"
+[[ -r "${docker_file}" ]] || log_fatal "dockerfile was not readable, looked in ${docker_file}"
 target="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET:-}"
 export_env_variable="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_EXPORT_ENV_VARIABLE:-"BUILDKITE_PLUGIN_DOCKER_IMAGE"}"
 exec 3>&1
