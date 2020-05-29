@@ -1,5 +1,5 @@
 log_fatal() {
-  echo "${@}"
+  echo "${@}" 1>&2
   # use the last argument as the exit code
   exit_code="${*: -1}"
   if [[ "${exit_code}" =~ ^[\d]+$ ]]; then
