@@ -109,7 +109,7 @@ if ! docker pull "${image}:${tag}"; then
     ${target_args[@]+"${target_args[@]}"} \
     "${context}"
   )
-  echo "Running \`docker ${docker_build_args[*]}\`"
+  echo "Inside $(pwd), running \`docker ${docker_build_args[*]}\`"
   docker "${docker_build_args[@]}" || exit 1
 
   docker tag "${image}:${tag}" "${image}:latest"
