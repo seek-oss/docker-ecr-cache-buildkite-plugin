@@ -100,8 +100,8 @@ if ! docker pull "${image}:${tag}"; then
   echo '--- Building image'
   image_build_args=(
     "build"
-    "--file='$(basename "${docker_file}")'"
-    "--tag='${image}:${tag}'"
+    "--file=$(basename "${docker_file}")"
+    "--tag=${image}:${tag}"
     "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ADDITIONAL_BUILD_ARGS:-}"
     ${build_args[@]+"${build_args[@]}"}
     ${target_args[@]+"${target_args[@]}"}
