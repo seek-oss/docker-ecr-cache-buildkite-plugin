@@ -103,13 +103,20 @@ if ! docker pull "${image}:${tag}"; then
     "--file=$(basename "${docker_file}")"
     "--tag=${image}:${tag}"
     "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ADDITIONAL_BUILD_ARGS:-}"
-    ${build_args[@]+"${build_args[@]}"}
-    ${target_args[@]+"${target_args[@]}"}
   )
-  pushd "${context}"
+  if [[ "${#build_args[@]}" -gt 0 ]]; then
+    image_build_args+=(
+      ${build_args[@]+"${build_args[@]}"}
+    )
+  fi
+  if [[ "${#target_args[@]}" -gt 0 ]]; then
+    image_build_args+=(
+      ${target_args[@]+"${target_args[@]}"}
+    )
+  fi
+
   echo "Inside $(pwd), running \`docker ${image_build_args[*]}\`"
-  docker "${image_build_args[@]}" "." || exit 1
-  popd
+  docker "${image_build_args[@]}" "${context}" || exit 1
 
   docker tag "${image}:${tag}" "${image}:latest"
 
