@@ -10,7 +10,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib/${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_R
 read_build_args() {
   read_list_property 'BUILD_ARGS'
   for arg in ${result[@]+"${result[@]}"}; do
-    build_args+=('--build-arg' "${arg}")
+    build_args+=("--build-arg=${arg}")
   done
 }
 
@@ -40,7 +40,7 @@ compute_tag() {
   echoerr '--- Computing tag'
 
   echoerr 'DOCKERFILE'
-  echoerr "+ ${docker_file}:${target:-<target>}"
+  echoerr "+ ${docker_file}:${target:-"<target>"}"
   sums="$(sha1sum "${docker_file}")"
   sums+="$(echo "${target}" | sha1sum)"
 
@@ -88,11 +88,6 @@ exec 3>&1
 tag="$(compute_tag "${docker_file}" 2>&3)"
 context=$(dirname "${docker_file}")
 
-target_args=()
-if [[ -n ${target} ]]; then
-  target_args+=('--target' "${target}")
-fi
-
 build_args=()
 read_build_args
 
@@ -102,21 +97,24 @@ if ! docker pull "${image}:${tag}"; then
     "build"
     "--file=${docker_file}"
     "--tag=${image}:${tag}"
-    "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ADDITIONAL_BUILD_ARGS:-}"
   )
-  if [[ "${#build_args[@]}" -gt 0 ]]; then
+  if [[ -n "${target:-}" ]]; then
     image_build_args+=(
-      ${build_args[@]+"${build_args[@]}"}
+      "--target=${target}"
     )
   fi
-  if [[ "${#target_args[@]}" -gt 0 ]]; then
-    image_build_args+=(
-      ${target_args[@]+"${target_args[@]}"}
-    )
+  if [[ "${#build_args[@]}" -gt 0 ]]; then
+    for ba in "${build_args[@]}"; do
+      image_build_args+=(
+        "${ba}"
+      )
+    done
   fi
 
   echo "Inside $(pwd), running \`docker ${image_build_args[*]} ${context}\`"
-  docker "${image_build_args[@]}" "${context}" || exit 1
+  # We can't quote BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ADDITIONAL_BUILD_ARGS, because it's passed here as a string instead of a bash array.
+  # shellcheck disable=SC2086
+  docker "${image_build_args[@]}" ${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ADDITIONAL_BUILD_ARGS:-} "${context}" || exit 1
 
   docker tag "${image}:${tag}" "${image}:latest"
 
