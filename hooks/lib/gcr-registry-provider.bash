@@ -13,7 +13,7 @@ get_registry_url() {
     log_fatal "gcp-project in plugin settings must have a value." 34
   fi
   if [[ -z "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGISTRY_HOSTNAME:-}" ]]; then
-    echo "registry-hostname had no value, defaulting to gcr.io"
+    echoerr "registry-hostname had no value, defaulting to gcr.io"
     BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGISTRY_HOSTNAME="gcr.io"
   fi
   echo "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGISTRY_HOSTNAME}/${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_GCP_PROJECT}/${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_NAME:-"$(get_default_image_name)"}"
