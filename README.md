@@ -152,24 +152,6 @@ steps:
       - docker#v3.3.0
 ```
 
-### Specifying an ECR repository name
-
-The plugin pushes and pulls Docker images to and from an ECR repository named
-`build-cache/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}`. You can
-optionally use a custom repository name:
-
-```yaml
-steps:
-  - command: 'echo wow'
-    plugins:
-      - seek-oss/docker-ecr-cache#v1.7.0:
-          ecr-name: my-unique-repository-name
-          ecr-tags:
-            Key: Value
-            Key2: Value2
-      - docker#v3.3.0
-```
-
 ### Changing the max cache time
 
 By default images are kept in ECR for up to 30 days. This can be changed by specifying a `max-age-days` parameter:
@@ -193,8 +175,51 @@ steps:
     plugins:
       - seek-oss/docker-ecr-cache#v1.7.0:
           export-env-variable: BUILDKITE_PLUGIN_MY_CUSTOM_PLUGIN_CACHE_IMAGE
-      - my-custom-plugin#v1.0.0
- ```
+      - my-custom-plugin#v1.0.0:
+```
+
+### AWS ECR specific options
+
+#### Specifying an ECR repository name
+
+The plugin pushes and pulls Docker images to and from an ECR repository named
+`build-cache/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}`. You can
+optionally use a custom repository name:
+
+```yaml
+steps:
+  - command: 'echo wow'
+    plugins:
+      - seek-oss/docker-ecr-cache#v1.7.0:
+          ecr-name: my-unique-repository-name
+          ecr-tags:
+            Key: Value
+            Key2: Value2
+      - docker#v3.3.0
+```
+
+### GCP GCR specific configuration
+
+[Overview of Google Container Registry](https://cloud.google.com/container-registry/docs/overview)
+
+Example:
+
+```yaml
+  - command: 'echo wow'
+    plugins:
+      - seek-oss/docker-ecr-cache#v1.7.0:
+          registry-provider: gcr
+          gcp-project: foo-bar-123456
+```
+
+#### Required GCR configuration
+
+- `registry-provider`: this must be `gcr` to aim at a google container registry.
+- `gcp-project`: this must be supplied. It is the GCP project your GCR is set up inside.
+
+#### Optional GCR configuration
+
+- `registry-hostname` (default: `gcr.io`). The location your image will be stored. [See upstream docs](https://cloud.google.com/container-registry/docs/overview#registry_name) for options.
 
 ## Design
 

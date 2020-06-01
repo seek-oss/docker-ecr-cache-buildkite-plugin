@@ -33,6 +33,10 @@ read_list_property() {
   done < <(env | sort)
 }
 
+get_default_image_name() {
+  echo "build-cache/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}"
+}
+
 compute_tag() {
   local docker_file="$1"
   local sums
