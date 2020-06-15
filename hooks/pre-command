@@ -3,98 +3,23 @@
 set -euo pipefail
 # shellcheck source=lib/stdlib.bash
 source "$(dirname "${BASH_SOURCE[0]}")/lib/stdlib.bash" || exit 67
-# shellcheck source=lib/ecr-registry-provider.bash
 source "$(dirname "${BASH_SOURCE[0]}")/lib/${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGISTRY_PROVIDER:-"ecr"}-registry-provider.bash" ||
-  log_fatal "Failed to source registry-provider. BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGISTRY_PROVIDER must be set to [ecr]" 67
-
-read_build_args() {
-  read_list_property 'BUILD_ARGS'
-  for arg in ${result[@]+"${result[@]}"}; do
-    build_args+=("--build-arg=${arg}")
-  done
-}
-
-# read a plugin property of type [array, string] into a Bash array. Buildkite
-# exposes a string value at BUILDKITE_PLUGIN_{NAME}_{KEY}, and array values at
-# BUILDKITE_PLUGIN_{NAME}_{KEY}_{IDX}.
-read_list_property() {
-  local base_name="BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_${1}"
-
-  result=()
-
-  if [[ -n ${!base_name:-} ]]; then
-    result+=("${!base_name}")
-  fi
-
-  while IFS='=' read -r item_name _; do
-    if [[ ${item_name} =~ ^(${base_name}_[0-9]+) ]]; then
-      result+=("${!item_name}")
-    fi
-  done < <(env | sort)
-}
-
-get_default_image_name() {
-  echo "build-cache/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}"
-}
-
-compute_tag() {
-  local docker_file="$1"
-  local sums
-
-  echoerr '--- Computing tag'
-
-  echoerr 'DOCKERFILE'
-  echoerr "+ ${docker_file}:${target:-"<target>"}"
-  sums="$(sha1sum "${docker_file}")"
-  sums+="$(echo "${target}" | sha1sum)"
-
-  echoerr 'ARCHITECTURE'
-  echoerr "+ $(uname -m)"
-  sums+="$(uname -m | sha1sum)"
-
-  echoerr 'BUILD_ARGS'
-  read_list_property 'BUILD_ARGS'
-  for arg in ${result[@]+"${result[@]}"}; do
-    echoerr "+ ${arg}"
-
-    # include underlying environment variable after echo
-    if [[ ${arg} != *=* ]]; then
-      arg+="=${!arg:-}"
-    fi
-
-    sums+="$(echo "${arg}" | sha1sum)"
-  done
-
-  # expand ** in cache-on properties
-  shopt -s globstar
-
-  echoerr 'CACHE_ON'
-  read_list_property 'CACHE_ON'
-  for glob in ${result[@]+"${result[@]}"}; do
-    echoerr "${glob}"
-    for file in ${glob}; do
-      echoerr "+ ${file}"
-      sums+="$(sha1sum "${file}")"
-    done
-  done
-
-  echo "${sums}" | sha1sum | cut -c-7
-}
+  log_fatal "Failed to source registry-provider. BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGISTRY_PROVIDER must be set to one of [ecr, gcr]" 67
 
 login
 configure_registry_for_image_if_necessary
 image="$(get_registry_url)"
 docker_file="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-"Dockerfile"}"
-[[ -r "${docker_file}" ]] || log_fatal "dockerfile was not readable, looked in ${docker_file}"
 target="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET:-}"
 export_env_variable="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_EXPORT_ENV_VARIABLE:-"BUILDKITE_PLUGIN_DOCKER_IMAGE"}"
 exec 3>&1
 tag="$(compute_tag "${docker_file}" 2>&3)"
-context=$(dirname "${docker_file}")
+context="$(dirname "${docker_file}")"
 
 build_args=()
 read_build_args
 
+echo "--- Pulling image"
 if ! docker pull "${image}:${tag}"; then
   echo '--- Building image'
   image_build_args=(

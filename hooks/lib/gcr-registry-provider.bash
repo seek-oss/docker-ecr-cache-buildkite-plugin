@@ -1,6 +1,6 @@
 login() {
   # Currently assume the use of docker-credential-gcr to manage AuthN transparently.
-  echo "TODO"
+  echo "Plugin currently assumes that docker-credential-gcr is on PATH and configured. See https://github.com/GoogleCloudPlatform/docker-credential-gcr#configuration-and-usage if later docker pull/push fail."
 }
 
 configure_registry_for_image_if_necessary() {
