@@ -1,0 +1,5 @@
+* text=auto
+# Shell scripts should be lf to avoid linter confusion docker container vs host mismatches on Windows.
+*.bash text eol=lf
+*.bats text eol=lf
+hooks/pre-command text eol=lf
