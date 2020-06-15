@@ -1,8 +1,5 @@
 #!/usr/bin/env bats
 
-# export GCLOUD_STUB_DEBUG=/dev/tty
-# export DOCKER_STUB_DEBUG=/dev/tty
-
 load "$BATS_PATH/load.bash"
 load "$PWD/hooks/lib/stdlib.bash"
 load "$PWD/hooks/lib/gcr-registry-provider.bash"
