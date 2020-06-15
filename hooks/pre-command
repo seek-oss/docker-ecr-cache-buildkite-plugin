@@ -43,7 +43,8 @@ if ! docker pull "${image}:${tag}"; then
   echo "Inside $(pwd), running \`docker ${image_build_args[*]} ${context}\`"
   # We can't quote BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ADDITIONAL_BUILD_ARGS, because it's passed here as a string instead of a bash array.
   # shellcheck disable=SC2086
-  docker "${image_build_args[@]}" ${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ADDITIONAL_BUILD_ARGS:-} "${context}" || exit 1
+  docker "${image_build_args[@]}" ${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ADDITIONAL_BUILD_ARGS:-} "${context}" ||
+    log_fatal "^^^ +++" 1
 
   docker tag "${image}:${tag}" "${image}:latest"
 
