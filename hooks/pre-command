@@ -178,7 +178,8 @@ export_env_variable="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_EXPORT_ENV_VARIABLE:-"B
 image="$(get_ecr_url "${repository_name}")"
 exec 3>&1
 tag="$(compute_tag "${docker_file}" 2>&3)"
-context=$(dirname "${docker_file}")
+dockerfile_folder=$(dirname "${docker_file}")
+context="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_CONTEXT:-${dockerfile_folder}}"
 
 target_args=()
 if [[ -n ${target} ]]; then
