@@ -167,7 +167,7 @@ compute_tag() {
   echo "${sums}" | sha1sum | cut -c-7
 }
 
-$(aws ecr get-login --no-include-email)
+$(aws ecr get-login-password)
 default_repository_name="build-cache/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}"
 repository_name="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_NAME:-${default_repository_name}}"
 max_age_days="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_MAX_AGE_DAYS:-30}"
