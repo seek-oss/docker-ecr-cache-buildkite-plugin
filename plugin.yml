@@ -25,4 +25,10 @@ configuration:
       type: string
     context:
       type: string
+    registry-provider:
+      type: string
+    gcp-project:
+      type: string
+    registry-hostname:
+      type: string
   required: []

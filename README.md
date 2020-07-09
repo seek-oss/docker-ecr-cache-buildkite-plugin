@@ -20,14 +20,14 @@ one doesn't already exist.
 ```dockerfile
 FROM bash
 
-RUN echo "my expensive build step"
+RUN echo 'my expensive build step'
 ```
 
 ```yaml
 steps:
-  - command: 'echo wow'
+  - command: echo wow
     plugins:
-      - seek-oss/docker-ecr-cache#v1.7.0
+      - seek-oss/docker-ecr-cache#v1.8.0
       - docker#v3.3.0
 ```
 
@@ -50,9 +50,9 @@ RUN npm install
 
 ```yaml
 steps:
-  - command: 'npm test'
+  - command: npm test
     plugins:
-      - seek-oss/docker-ecr-cache#v1.7.0:
+      - seek-oss/docker-ecr-cache#v1.8.0:
           cache-on:
             - package-lock.json
       - docker#v3.3.0:
@@ -64,9 +64,9 @@ The `cache-on` property also supports Bash globbing with `globstar`:
 
 ```yaml
 steps:
-  - command: 'npm test'
+  - command: npm test
     plugins:
-      - seek-oss/docker-ecr-cache#v1.7.0:
+      - seek-oss/docker-ecr-cache#v1.8.0:
           cache-on:
             - '**/package.json' # monorepo with multiple manifest files
             - yarn.lock
@@ -81,9 +81,9 @@ It's possible to specify the Dockerfile to use by:
 
 ```yaml
 steps:
-  - command: 'echo wow'
+  - command: echo wow
     plugins:
-      - seek-oss/docker-ecr-cache#v1.7.0:
+      - seek-oss/docker-ecr-cache#v1.8.0:
           dockerfile: my-dockerfile
       - docker#v3.3.0
 ```
@@ -100,9 +100,9 @@ stage to run commands against:
 
 ```yaml
 steps:
-  - command: 'cargo test'
+  - command: cargo test
     plugins:
-      - seek-oss/docker-ecr-cache#v1.7.0:
+      - seek-oss/docker-ecr-cache#v1.8.0:
           target: build-deps
       - docker#v3.3.0
 ```
@@ -143,11 +143,11 @@ RUN echo "${ARG_2}"
 
 ```yaml
 steps:
-  - command: 'echo amaze'
+  - command: echo amaze
     env:
       ARG_1: wow
     plugins:
-      - seek-oss/docker-ecr-cache#v1.7.0:
+      - seek-oss/docker-ecr-cache#v1.8.0:
           build-args:
             - ARG_1
             - ARG_2=such
@@ -158,30 +158,12 @@ Additional `docker build` arguments be passed via the `additional-build-args` se
 
 ```yaml
 steps:
-  - command: 'echo amaze'
+  - command: echo amaze
     env:
       ARG_1: wow
     plugins:
-      - seek-oss/docker-ecr-cache#v1.7.0:
+      - seek-oss/docker-ecr-cache#v1.8.0:
           additional-build-args: '--ssh= default=\$SSH_AUTH_SOCK'
-      - docker#v3.3.0
-```
-
-### Specifying an ECR repository name
-
-The plugin pushes and pulls Docker images to and from an ECR repository named
-`build-cache/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}`. You can
-optionally use a custom repository name:
-
-```yaml
-steps:
-  - command: 'echo wow'
-    plugins:
-      - seek-oss/docker-ecr-cache#v1.7.0:
-          ecr-name: my-unique-repository-name
-          ecr-tags: 
-            Key: Value
-            Key2: Value2
       - docker#v3.3.0
 ```
 
@@ -191,25 +173,68 @@ By default images are kept in ECR for up to 30 days. This can be changed by spec
 
 ```yaml
 steps:
-  - command: 'echo wow'
+  - command: echo wow
     plugins:
-      - seek-oss/docker-ecr-cache#v1.7.0:
+      - seek-oss/docker-ecr-cache#v1.8.0:
           max-age-days: 7
       - docker#v3.3.0
 ```
 
-### Changing the name of exported variable 
+### Changing the name of exported variable
 
 By default image name and computed tag are exported to the Docker buildkite plugin env variable `BUILDKITE_PLUGIN_DOCKER_IMAGE`. In order to chain the plugin with a different plugin, this can be changed by specifying a `export-env-variable` parameter:
 
 ```yaml
 steps:
-  - command: 'echo wow'
+  - command: echo wow
     plugins:
-      - seek-oss/docker-ecr-cache#v1.7.0:
+      - seek-oss/docker-ecr-cache#v1.8.0:
           export-env-variable: BUILDKITE_PLUGIN_MY_CUSTOM_PLUGIN_CACHE_IMAGE
-      - my-custom-plugin#v1.0.0
- ```
+      - my-custom-plugin#v1.0.0:
+```
+
+### AWS ECR specific options
+
+#### Specifying an ECR repository name
+
+The plugin pushes and pulls Docker images to and from an ECR repository named
+`build-cache/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}`. You can
+optionally use a custom repository name:
+
+```yaml
+steps:
+  - command: echo wow
+    plugins:
+      - seek-oss/docker-ecr-cache#v1.8.0:
+          ecr-name: my-unique-repository-name
+          ecr-tags:
+            Key: Value
+            Key2: Value2
+      - docker#v3.3.0
+```
+
+### GCP GCR specific configuration
+
+[Overview of Google Container Registry](https://cloud.google.com/container-registry/docs/overview)
+
+Example:
+
+```yaml
+- command: echo wow
+  plugins:
+    - seek-oss/docker-ecr-cache#v1.8.0:
+        registry-provider: gcr
+        gcp-project: foo-bar-123456
+```
+
+#### Required GCR configuration
+
+- `registry-provider`: this must be `gcr` to aim at a google container registry.
+- `gcp-project`: this must be supplied. It is the GCP project your GCR is set up inside.
+
+#### Optional GCR configuration
+
+- `registry-hostname` (default: `gcr.io`). The location your image will be stored. [See upstream docs](https://cloud.google.com/container-registry/docs/overview#registry_name) for options.
 
 ## Design
 
@@ -233,7 +258,7 @@ automatically applied to expire images after 30 days (configurable via `max-age-
 
 To run the tests of this plugin, run
 
-```
+```bash
 docker-compose run --rm tests
 ```
 
