@@ -3,7 +3,7 @@
 [![GitHub Release](https://img.shields.io/github/release/seek-oss/docker-ecr-cache-buildkite-plugin.svg)](https://github.com/seek-oss/docker-ecr-cache-buildkite-plugin/releases)
 
 A [Buildkite plugin](https://buildkite.com/docs/agent/v3/plugins) to cache
-Docker images in Amazon ECR.
+Docker images in Amazon ECR or Google Container Registry.
 
 This allows you to define a Dockerfile for your build-time dependencies without
 worrying about the time it takes to build the image. It allows you to re-use
@@ -27,7 +27,7 @@ RUN echo 'my expensive build step'
 steps:
   - command: echo wow
     plugins:
-      - seek-oss/docker-ecr-cache#v1.8.0
+      - seek-oss/docker-ecr-cache#v1.9.0
       - docker#v3.3.0
 ```
 
@@ -52,7 +52,7 @@ RUN npm install
 steps:
   - command: npm test
     plugins:
-      - seek-oss/docker-ecr-cache#v1.8.0:
+      - seek-oss/docker-ecr-cache#v1.9.0:
           cache-on:
             - package-lock.json
       - docker#v3.3.0:
@@ -66,7 +66,7 @@ The `cache-on` property also supports Bash globbing with `globstar`:
 steps:
   - command: npm test
     plugins:
-      - seek-oss/docker-ecr-cache#v1.8.0:
+      - seek-oss/docker-ecr-cache#v1.9.0:
           cache-on:
             - '**/package.json' # monorepo with multiple manifest files
             - yarn.lock
@@ -83,7 +83,7 @@ It's possible to specify the Dockerfile to use by:
 steps:
   - command: echo wow
     plugins:
-      - seek-oss/docker-ecr-cache#v1.8.0:
+      - seek-oss/docker-ecr-cache#v1.9.0:
           dockerfile: my-dockerfile
       - docker#v3.3.0
 ```
@@ -102,7 +102,7 @@ stage to run commands against:
 steps:
   - command: cargo test
     plugins:
-      - seek-oss/docker-ecr-cache#v1.8.0:
+      - seek-oss/docker-ecr-cache#v1.9.0:
           target: build-deps
       - docker#v3.3.0
 ```
@@ -117,7 +117,7 @@ The `context` property can be used to specify a different path.
 steps:
   - command: cargo test
     plugins:
-      - seek-oss/docker-ecr-cache#v1.8.0:
+      - seek-oss/docker-ecr-cache#v1.9.0:
           dockerfile: dockerfiles/test/Dockerfile
           context: '.'
       - docker#v3.3.0
@@ -146,7 +146,7 @@ steps:
     env:
       ARG_1: wow
     plugins:
-      - seek-oss/docker-ecr-cache#v1.8.0:
+      - seek-oss/docker-ecr-cache#v1.9.0:
           build-args:
             - ARG_1
             - ARG_2=such
@@ -161,7 +161,7 @@ steps:
     env:
       ARG_1: wow
     plugins:
-      - seek-oss/docker-ecr-cache#v1.8.0:
+      - seek-oss/docker-ecr-cache#v1.9.0:
           additional-build-args: '--ssh= default=\$SSH_AUTH_SOCK'
       - docker#v3.3.0
 ```
@@ -174,7 +174,7 @@ By default images are kept in ECR for up to 30 days. This can be changed by spec
 steps:
   - command: echo wow
     plugins:
-      - seek-oss/docker-ecr-cache#v1.8.0:
+      - seek-oss/docker-ecr-cache#v1.9.0:
           max-age-days: 7
       - docker#v3.3.0
 ```
@@ -187,7 +187,7 @@ By default image name and computed tag are exported to the Docker buildkite plug
 steps:
   - command: echo wow
     plugins:
-      - seek-oss/docker-ecr-cache#v1.8.0:
+      - seek-oss/docker-ecr-cache#v1.9.0:
           export-env-variable: BUILDKITE_PLUGIN_MY_CUSTOM_PLUGIN_CACHE_IMAGE
       - my-custom-plugin#v1.0.0:
 ```
@@ -204,7 +204,7 @@ optionally use a custom repository name:
 steps:
   - command: echo wow
     plugins:
-      - seek-oss/docker-ecr-cache#v1.8.0:
+      - seek-oss/docker-ecr-cache#v1.9.0:
           ecr-name: my-unique-repository-name
           ecr-tags:
             Key: Value
@@ -221,7 +221,7 @@ Example:
 ```yaml
 - command: echo wow
   plugins:
-    - seek-oss/docker-ecr-cache#v1.8.0:
+    - seek-oss/docker-ecr-cache#v1.9.0:
         registry-provider: gcr
         gcp-project: foo-bar-123456
 ```
