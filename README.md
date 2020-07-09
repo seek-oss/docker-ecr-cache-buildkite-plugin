@@ -115,12 +115,11 @@ The `context` property can be used to specify a different path.
 
 ```yaml
 steps:
-  - command: 'cargo test'
+  - command: cargo test
     plugins:
-      - seek-oss/docker-ecr-cache#v1.7.0:
+      - seek-oss/docker-ecr-cache#v1.8.0:
           dockerfile: dockerfiles/test/Dockerfile
-          target: build-deps
-          context: "."
+          context: '.'
       - docker#v3.3.0
 ```
 
