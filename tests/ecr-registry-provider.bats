@@ -4,10 +4,12 @@
 # export DOCKER_STUB_DEBUG=/dev/tty
 
 load "$BATS_PATH/load.bash"
+load "$PWD/hooks/lib/stdlib.bash"
+load "$PWD/hooks/lib/ecr-registry-provider.bash"
 
 pre_command_hook="$PWD/hooks/pre-command"
 
-@test "Applies lifecycle policy to existing repositories" {
+@test "ECR: Applies lifecycle policy to existing repositories" {
   export BUILDKITE_ORGANIZATION_SLUG="example-org"
   export BUILDKITE_PIPELINE_SLUG="example-pipeline"
   local expected_repository_name="build-cache/example-org/example-pipeline"
@@ -43,7 +45,7 @@ pre_command_hook="$PWD/hooks/pre-command"
   unstub sha1sum
 }
 
-@test "Builds new images with tags" {
+@test "ECR: Builds new images with tags" {
   export BUILDKITE_ORGANIZATION_SLUG="example-org"
   export BUILDKITE_PIPELINE_SLUG="example-pipeline"
   local expected_repository_name="build-cache/example-org/example-pipeline"

@@ -23,4 +23,10 @@ configuration:
       type: number
     export-env-variable:
       type: string
+    registry-provider:
+      type: string
+    gcp-project:
+      type: string
+    registry-hostname:
+      type: string
   required: []

@@ -1,202 +1,50 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
+# shellcheck source=lib/stdlib.bash
+source "$(dirname "${BASH_SOURCE[0]}")/lib/stdlib.bash" || exit 67
+source "$(dirname "${BASH_SOURCE[0]}")/lib/${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGISTRY_PROVIDER:-"ecr"}-registry-provider.bash" ||
+  log_fatal "Failed to source registry-provider. BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGISTRY_PROVIDER must be set to one of [ecr, gcr]" 67
 
-get_ecr_url() {
-  local repository_name="${1}"
-  aws ecr describe-repositories \
-    --repository-names "${repository_name}" \
-    --output text \
-    --query 'repositories[0].repositoryUri'
-}
-
-ecr_exists() {
-  local repository_name="${1}"
-  aws ecr describe-repositories \
-    --repository-names "${repository_name}" \
-    --output text \
-    --query 'repositories[0].registryId'
-}
-
-get_ecr_arn() {
-  local repository_name="${1}"
-  aws ecr describe-repositories \
-    --repository-names "${repository_name}" \
-    --output text \
-    --query 'repositories[0].repositoryArn'
-}
-
-get_ecr_tags() {
-local result=$(cat <<EOF
-{
-    "tags": []
-}
-EOF
-)
-  while IFS='=' read -r name _ ; do
-    if [[ $name =~ ^(BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_TAGS_) ]] ; then
-      # Handle plain key=value, e.g
-      # ecr-tags:
-      #   KEY_NAME: 'key-value'
-      key_name=$(echo "${name}" | sed 's/^BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_TAGS_//')
-      key_value=$(env | grep "$name" | sed "s/^$name=//")
-      result=$(echo $result | jq ".tags[.tags| length] |= . + {\"Key\": \"${key_name}\", \"Value\": \"${key_value}\"}")
-    fi
-  done < <(env | sort)
-
-  echo $result
-}
-
-upsert_ecr() {
-  local repository_name="${1}"
-  local max_age_days="${2}"
-  local ecr_tags="$(get_ecr_tags)"
-  local num_tags=$(echo $ecr_tags | jq '.tags | length')
-
-  if ! ecr_exists "${repository_name}"; then
-    aws ecr create-repository --repository-name "${repository_name}" --cli-input-json "${ecr_tags}"
-  else
-    if [ "$num_tags" -gt 0 ]; then
-      local ecr_arn=$(get_ecr_arn "${repository_name}")
-      aws ecr tag-resource --resource-arn ${ecr_arn} --cli-input-json "${ecr_tags}"
-    fi
-  fi
-
-  # As of May 2019 ECR lifecycle policies can only have one rule that targets "any"
-  # Due to this limitation, only the max_age policy is applied
-  policy_text=$(cat <<EOF
-{
-  "rules": [
-    {
-      "rulePriority": 1,
-      "description": "Expire images older than ${max_age_days} days",
-      "selection": {
-        "tagStatus": "any",
-        "countType": "sinceImagePushed",
-        "countUnit": "days",
-        "countNumber": ${max_age_days}
-      },
-      "action": {
-        "type": "expire"
-      }
-    }
-  ]
-}
-EOF
-)
-
-  # Always set the lifecycle policy to update repositories automatically
-  # created before PR #9.
-  #
-  # When using a custom repository with a restricted Buildkite role this might
-  # not succeed. Ignore the error and let the build continue.
-  aws ecr put-lifecycle-policy \
-  --repository-name "${repository_name}" \
-  --lifecycle-policy-text "${policy_text}" || true
-}
-
-read_build_args() {
-  read_list_property 'BUILD_ARGS'
-  for arg in ${result[@]+"${result[@]}"}; do
-    build_args+=('--build-arg' "${arg}")
-  done
-}
-
-# read a plugin property of type [array, string] into a Bash array. Buildkite
-# exposes a string value at BUILDKITE_PLUGIN_{NAME}_{KEY}, and array values at
-# BUILDKITE_PLUGIN_{NAME}_{KEY}_{IDX}.
-read_list_property() {
-  local base_name="BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_${1}"
-
-  result=()
-
-  if [[ -n ${!base_name:-} ]]; then
-    result+=("${!base_name}")
-  fi
-
-  while IFS='=' read -r item_name _; do
-    if [[ ${item_name} =~ ^(${base_name}_[0-9]+) ]]; then
-      result+=("${!item_name}")
-    fi
-  done < <(env | sort)
-}
-
-compute_tag() {
-  local docker_file="$1"
-  local sums
-
-  echoerr() { echo "$@" 1>&2; }
-
-  echoerr '--- Computing tag'
-
-  echoerr 'DOCKERFILE'
-  echoerr "+ ${docker_file}:${target:-<target>}"
-  sums="$(sha1sum "${docker_file}")"
-  sums+="$(echo "${target}" | sha1sum)"
-
-  echoerr 'ARCHITECTURE'
-  echoerr "+ $(uname -m)"
-  sums+="$(uname -m | sha1sum)"
-
-  echoerr 'BUILD_ARGS'
-  read_list_property 'BUILD_ARGS'
-  for arg in ${result[@]+"${result[@]}"}; do
-    echoerr "+ ${arg}"
-
-    # include underlying environment variable after echo
-    if [[ ${arg} != *=* ]]; then
-      arg+="=${!arg:-}"
-    fi
-
-    sums+="$(echo "${arg}" | sha1sum)"
-  done
-
-  # expand ** in cache-on properties
-  shopt -s globstar
-
-  echoerr 'CACHE_ON'
-  read_list_property 'CACHE_ON'
-  for glob in ${result[@]+"${result[@]}"}; do
-    echoerr "${glob}"
-    for file in ${glob}; do
-      echoerr "+ ${file}"
-      sums+="$(sha1sum "${file}")"
-    done
-  done
-
-  echo "${sums}" | sha1sum | cut -c-7
-}
-
-$(aws ecr get-login --no-include-email)
-default_repository_name="build-cache/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}"
-repository_name="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_NAME:-${default_repository_name}}"
-max_age_days="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_MAX_AGE_DAYS:-30}"
-upsert_ecr "${repository_name}" "${max_age_days}"
-docker_file="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-Dockerfile}"
+login
+configure_registry_for_image_if_necessary
+image="$(get_registry_url)"
+docker_file="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-"Dockerfile"}"
 target="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET:-}"
 export_env_variable="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_EXPORT_ENV_VARIABLE:-"BUILDKITE_PLUGIN_DOCKER_IMAGE"}"
-image="$(get_ecr_url "${repository_name}")"
 exec 3>&1
 tag="$(compute_tag "${docker_file}" 2>&3)"
-context=$(dirname "${docker_file}")
-
-target_args=()
-if [[ -n ${target} ]]; then
-  target_args+=('--target' "${target}")
-fi
+context="$(dirname "${docker_file}")"
 
 build_args=()
 read_build_args
 
+echo "--- Pulling image"
 if ! docker pull "${image}:${tag}"; then
   echo '--- Building image'
-  docker build \
-  --file "${docker_file}" \
-  --tag "${image}:${tag}" \
-  ${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ADDITIONAL_BUILD_ARGS:-} \
-  ${build_args[@]+"${build_args[@]}"} \
-  ${target_args[@]+"${target_args[@]}"} \
-  "${context}" || exit 1
+  image_build_args=(
+    "build"
+    "--file=${docker_file}"
+    "--tag=${image}:${tag}"
+  )
+  if [[ -n "${target:-}" ]]; then
+    image_build_args+=(
+      "--target=${target}"
+    )
+  fi
+  if [[ "${#build_args[@]}" -gt 0 ]]; then
+    for ba in "${build_args[@]}"; do
+      image_build_args+=(
+        "${ba}"
+      )
+    done
+  fi
+
+  echo "Inside $(pwd), running \`docker ${image_build_args[*]} ${context}\`"
+  # We can't quote BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ADDITIONAL_BUILD_ARGS, because it's passed here as a string instead of a bash array.
+  # shellcheck disable=SC2086
+  docker "${image_build_args[@]}" ${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ADDITIONAL_BUILD_ARGS:-} "${context}" ||
+    log_fatal "^^^ +++" 1
 
   docker tag "${image}:${tag}" "${image}:latest"
 
