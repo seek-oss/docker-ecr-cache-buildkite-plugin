@@ -88,8 +88,6 @@ steps:
       - docker#v3.3.0
 ```
 
-The subdirectory containing the Dockerfile is the path used for the build's context.
-
 ### Specifying a target step
 
 A [multi-stage Docker build] can be used to reduce an application container to
@@ -106,6 +104,22 @@ steps:
     plugins:
       - seek-oss/docker-ecr-cache#v1.8.0:
           target: build-deps
+      - docker#v3.3.0
+```
+
+### Specifying build context
+
+The subdirectory containing the Dockerfile is the path used for the build's context by default.
+
+The `context` property can be used to specify a different path.
+
+```yaml
+steps:
+  - command: cargo test
+    plugins:
+      - seek-oss/docker-ecr-cache#v1.8.0:
+          dockerfile: dockerfiles/test/Dockerfile
+          context: '.'
       - docker#v3.3.0
 ```
 
