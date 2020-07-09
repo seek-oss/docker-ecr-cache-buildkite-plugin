@@ -192,7 +192,7 @@ steps:
       - my-custom-plugin#v1.0.0:
 ```
 
-### AWS ECR specific options
+### AWS ECR specific configuration
 
 #### Specifying an ECR repository name
 
@@ -210,6 +210,34 @@ steps:
             Key: Value
             Key2: Value2
       - docker#v3.3.0
+```
+
+#### Required permissions
+
+Below is a sample set of IAM policy statements that will allow this plugin to work:
+
+```yaml
+- Sid: AllowRepositoryActions
+  Action:
+    - ecr:BatchCheckLayerAvailability
+    - ecr:BatchGetImage
+    - ecr:CompleteLayerUpload
+    - ecr:CreateRepository
+    - ecr:DescribeImages
+    - ecr:DescribeRepositories
+    - ecr:InitiateLayerUpload
+    - ecr:PutImage
+    - ecr:PutLifecyclePolicy
+    - ecr:SetRepositoryPolicy
+    - ecr:UploadLayerPart
+  Effect: Allow
+  Resource:
+    - Fn::Sub: arn:aws:ecr:*:${AWS::AccountId}:repository/build-cache/${YourOrganisationSlug}/${YourPipelineSlug}
+- Sid: AllowGetAuthorizationToken
+  Action:
+    - ecr:GetAuthorizationToken
+  Resource: "*"
+  Effect: Allow
 ```
 
 ### GCP GCR specific configuration
