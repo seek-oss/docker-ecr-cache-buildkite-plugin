@@ -219,17 +219,17 @@ Below is a sample set of IAM policy statements that will allow this plugin to wo
 ```yaml
 - Sid: AllowRepositoryActions
   Action:
-    - ecr:DescribeRepositories
-    - ecr:CreateRepository
-    - ecr:SetRepositoryPolicy
-    - ecr:PutLifecyclePolicy
-    - ecr:PutImage
-    - ecr:InitiateLayerUpload
-    - ecr:UploadLayerPart
-    - ecr:CompleteLayerUpload
     - ecr:BatchCheckLayerAvailability
     - ecr:BatchGetImage
+    - ecr:CompleteLayerUpload
+    - ecr:CreateRepository
     - ecr:DescribeImages
+    - ecr:DescribeRepositories
+    - ecr:InitiateLayerUpload
+    - ecr:PutImage
+    - ecr:PutLifecyclePolicy
+    - ecr:SetRepositoryPolicy
+    - ecr:UploadLayerPart
   Effect: Allow
   Resource:
     - Fn::Sub: arn:aws:ecr:*:${AWS::AccountId}:repository/build-cache/${YourOrganisationSlug}/${YourPipelineSlug}
