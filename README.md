@@ -214,23 +214,31 @@ steps:
 
 #### Required permissions
 
-The IAM user that the Buildkite agent is running as must have the following permissions for the ECR repository resource:
+Below is a sample set of IAM policy statements that will allow this plugin to work:
 
+```yaml
+- Sid: AllowRepositoryActions
+  Action:
+    - ecr:DescribeRepositories
+    - ecr:CreateRepository
+    - ecr:SetRepositoryPolicy
+    - ecr:PutLifecyclePolicy
+    - ecr:PutImage
+    - ecr:InitiateLayerUpload
+    - ecr:UploadLayerPart
+    - ecr:CompleteLayerUpload
+    - ecr:BatchCheckLayerAvailability
+    - ecr:BatchGetImage
+    - ecr:DescribeImages
+  Effect: Allow
+  Resource:
+    - Fn::Sub: arn:aws:ecr:*:${AWS::AccountId}:repository/build-cache/${YourOrganisationSlug}/${YourPipelineSlug}
+- Sid: AllowGetAuthorizationToken
+  Action:
+    - ecr:GetAuthorizationToken
+  Resource: "*"
+  Effect: Allow
 ```
-ecr:DescribeRepositories
-ecr:CreateRepository
-ecr:SetRepositoryPolicy
-ecr:PutLifecyclePolicy
-ecr:PutImage
-ecr:InitiateLayerUpload
-ecr:UploadLayerPart
-ecr:CompleteLayerUpload
-ecr:BatchCheckLayerAvailability
-ecr:BatchGetImage
-ecr:DescribeImage
-```
-
-The IAM user also requires the `ecr:GetAuthorizationToken` on the `*` resource.
 
 ### GCP GCR specific configuration
 
