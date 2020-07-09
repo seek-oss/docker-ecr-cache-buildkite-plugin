@@ -212,6 +212,26 @@ steps:
       - docker#v3.3.0
 ```
 
+#### Required permissions
+
+The IAM user that the Buildkite agent is running as must have the following permissions for the ECR repository resource:
+
+```
+ecr:DescribeRepositories
+ecr:CreateRepository
+ecr:SetRepositoryPolicy
+ecr:PutLifecyclePolicy
+ecr:PutImage
+ecr:InitiateLayerUpload
+ecr:UploadLayerPart
+ecr:CompleteLayerUpload
+ecr:BatchCheckLayerAvailability
+ecr:BatchGetImage
+ecr:DescribeImage
+```
+
+The IAM user also requires the `ecr:GetAuthorizationToken` on the `*` resource.
+
 ### GCP GCR specific configuration
 
 [Overview of Google Container Registry](https://cloud.google.com/container-registry/docs/overview)
