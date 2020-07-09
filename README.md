@@ -192,7 +192,7 @@ steps:
       - my-custom-plugin#v1.0.0:
 ```
 
-### AWS ECR specific options
+### AWS ECR specific configuration
 
 #### Specifying an ECR repository name
 
