@@ -54,6 +54,7 @@ steps:
     plugins:
       - seek-oss/docker-ecr-cache#v1.9.0:
           cache-on:
+            - package.json # avoid cache hits on stale lockfiles
             - package-lock.json
       - docker#v3.3.0:
           volumes:
@@ -236,7 +237,7 @@ Below is a sample set of IAM policy statements that will allow this plugin to wo
 - Sid: AllowGetAuthorizationToken
   Action:
     - ecr:GetAuthorizationToken
-  Resource: "*"
+  Resource: '*'
   Effect: Allow
 ```
 
