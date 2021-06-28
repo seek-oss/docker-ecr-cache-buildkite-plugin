@@ -11,7 +11,7 @@ configure_registry_for_image_if_necessary
 image="$(get_registry_url)"
 if [ -n "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE_INLINE-}" ]
 then
-  [-n "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-}" ] &&
+  [ -n "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-}" ] &&
     log_fatal "Cannot specify both 'dockerfile' and 'dockerfile-inline'."
   docker_file="$(mktemp)"
   echo "$BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE_INLINE" > "$docker_file"
