@@ -92,6 +92,8 @@ pre_command_hook="$PWD/hooks/pre-command"
   assert_line "--- Pushing tag stubbed-computed-tag"
   assert_line "--- Pushing tag latest"
 
+  assert_equal "FROM stub" "$(cat $one_time_mktemp)"
+
   unstub mktemp
   unstub docker
 }
