@@ -51,7 +51,9 @@ compute_tag() {
 
   echoerr 'DOCKERFILE'
   echoerr "+ ${docker_file}:${target:-"<target>"}"
-  sums="$(sha1sum "${docker_file}")"
+  # Inline Dockerfile might be saved under a different name each time,
+  # only content matters
+  sums="$(sha1sum < "${docker_file}")"
   sums+="$(echo "${target}" | sha1sum)"
 
   echoerr 'ARCHITECTURE'
