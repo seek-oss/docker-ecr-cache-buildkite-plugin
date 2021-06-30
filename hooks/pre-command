@@ -44,6 +44,7 @@ if ! docker pull "${image}:${tag}"; then
     done
   fi
   if [[ "${#secrets_args[@]}" -gt 0 ]]; then
+    export DOCKER_BUILDKIT=1
     for sa in "${secrets_args[@]}"; do
       image_build_args+=(
         "${sa}"
