@@ -9,13 +9,26 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib/${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_R
 login
 configure_registry_for_image_if_necessary
 image="$(get_registry_url)"
-docker_file="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-"Dockerfile"}"
+if [ -n "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE_INLINE:-}" ]
+then
+  [ -n "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-}" ] &&
+    log_fatal "Cannot specify both 'dockerfile' and 'dockerfile-inline'."
+  # Put the Dockerfile into a temporary directory to work around
+  # https://github.com/docker/cli/issues/2249
+  docker_file_dir="$(mktemp -d)"
+  docker_file="${docker_file_dir}/Dockerfile"
+  echo "$BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE_INLINE" > "$docker_file"
+  context_dir="."
+else
+  docker_file="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-"Dockerfile"}"
+  context_dir="$(dirname "${docker_file}")"
+  docker_file_dir="${context_dir}"
+fi
 target="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TARGET:-}"
 export_env_variable="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_EXPORT_ENV_VARIABLE:-"BUILDKITE_PLUGIN_DOCKER_IMAGE"}"
 exec 3>&1
 tag="$(compute_tag "${docker_file}" 2>&3)"
-docker_file_dir="$(dirname "${docker_file}")"
-context="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_CONTEXT:-"${docker_file_dir}"}"
+context="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_CONTEXT:-"${context_dir}"}"
 
 build_args=()
 read_build_args

@@ -89,6 +89,23 @@ steps:
       - docker#v3.3.0
 ```
 
+Alternatively, Dockerfile can be embedded inline:
+
+```yaml
+steps:
+  - command: echo wow
+    plugins:
+      - seek-oss/docker-ecr-cache#v1.9.0:
+          dockerfile-inline: |
+            FROM node:16-alpine
+            WORKDIR /workdir
+            COPY package.json package-lock.json /workdir
+            RUN npm install
+
+
+      - docker#v3.3.0
+```
+
 ### Specifying a target step
 
 A [multi-stage Docker build] can be used to reduce an application container to
