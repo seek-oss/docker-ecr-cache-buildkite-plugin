@@ -197,6 +197,8 @@ steps:
 ```
 
 You must have a recent version of Docker with BuildKit enabled to use secrets.
+BuildKit will be enabled automatically if any secrets are present in the
+configuration.
 
 ### Changing the max cache time
 
