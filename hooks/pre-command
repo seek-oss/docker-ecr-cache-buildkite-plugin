@@ -9,7 +9,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib/${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_R
 login
 configure_registry_for_image_if_necessary
 image="$(get_registry_url)"
-if [ -n "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE_INLINE-}" ]
+if [ -n "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE_INLINE:-}" ]
 then
   [ -n "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE:-}" ] &&
     log_fatal "Cannot specify both 'dockerfile' and 'dockerfile-inline'."
