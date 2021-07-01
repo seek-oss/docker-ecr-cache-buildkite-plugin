@@ -73,14 +73,14 @@ pre_command_hook="$PWD/hooks/pre-command"
   export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE_INLINE="FROM stub"
   local repository_uri="pretend.host/path/segment/image"
 
-  one_time_mktemp=$(mktemp)
+  one_time_mktemp=$(mktemp -d)
 
   stub mktemp \
-    "echo $one_time_mktemp"
+    "-d : echo $one_time_mktemp"
 
   stub docker \
     "pull * : false" \
-    "build --file=$one_time_mktemp * : echo building docker image" \
+    "build --file=$one_time_mktemp/Dockerfile * : echo building docker image" \
     "tag ${repository_uri}:stubbed-computed-tag ${repository_uri}:latest : echo tagged latest" \
     "push ${repository_uri}:stubbed-computed-tag : echo pushed stubbed-computed-tag" \
     "push ${repository_uri}:latest : echo pushed latest"
@@ -92,7 +92,7 @@ pre_command_hook="$PWD/hooks/pre-command"
   assert_line "--- Pushing tag stubbed-computed-tag"
   assert_line "--- Pushing tag latest"
 
-  assert_equal "FROM stub" "$(cat $one_time_mktemp)"
+  assert_equal "FROM stub" "$(cat ${one_time_mktemp}/Dockerfile)"
 
   unstub mktemp
   unstub docker
