@@ -20,6 +20,14 @@ read_build_args() {
   done
 }
 
+read_secrets() {
+  read_list_property 'SECRETS'
+  for arg in ${result[@]+"${result[@]}"}; do
+    secrets_args+=("--secret")
+    secrets_args+=("id=${arg},env=${arg}")
+  done
+}
+
 # read a plugin property of type [array, string] into a Bash array. Buildkite
 # exposes a string value at BUILDKITE_PLUGIN_{NAME}_{KEY}, and array values at
 # BUILDKITE_PLUGIN_{NAME}_{KEY}_{IDX}.

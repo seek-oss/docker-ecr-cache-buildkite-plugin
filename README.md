@@ -184,6 +184,39 @@ steps:
       - docker#v3.3.0
 ```
 
+### Specifying secrets
+
+[Build-time variables] can be extracted from a pulled image, so when passing
+sensitive data, [secrets] should be used instead.
+
+[secrets]: https://docs.docker.com/develop/develop-images/build_enhancements/#new-docker-build-secret-information
+
+To use environment variables (perhaps fetched by another plugin) as secrets:
+
+```dockerfile
+# syntax=docker/dockerfile:1.2
+
+FROM bash
+
+RUN --mount=type=secret,id=SECRET cat /run/secrets/SECRET
+```
+
+```yaml
+steps:
+  - command: echo amaze
+    env:
+      SECRET: wow
+    plugins:
+      - seek-oss/docker-ecr-cache#v1.9.0:
+          secrets:
+            - SECRET
+      - docker#v3.3.0
+```
+
+You must have a recent version of Docker with BuildKit enabled to use secrets.
+BuildKit will be enabled automatically if any secrets are present in the
+configuration.
+
 ### Changing the max cache time
 
 By default images are kept in ECR for up to 30 days. This can be changed by specifying a `max-age-days` parameter:

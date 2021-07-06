@@ -33,6 +33,9 @@ context="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_CONTEXT:-"${context_dir}"}"
 build_args=()
 read_build_args
 
+secrets_args=()
+read_secrets
+
 echo "--- Pulling image"
 if ! docker pull "${image}:${tag}"; then
   echo '--- Building image'
@@ -50,6 +53,14 @@ if ! docker pull "${image}:${tag}"; then
     for ba in "${build_args[@]}"; do
       image_build_args+=(
         "${ba}"
+      )
+    done
+  fi
+  if [[ "${#secrets_args[@]}" -gt 0 ]]; then
+    export DOCKER_BUILDKIT=1
+    for sa in "${secrets_args[@]}"; do
+      image_build_args+=(
+        "${sa}"
       )
     done
   fi
