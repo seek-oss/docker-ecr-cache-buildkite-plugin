@@ -24,8 +24,20 @@ read_secrets() {
   read_list_property 'SECRETS'
   for arg in ${result[@]+"${result[@]}"}; do
     secrets_args+=("--secret")
-    secrets_args+=("id=${arg},env=${arg}")
+    if [[ "${arg}" =~ ^id= ]]; then
+      # Assume this is a full argument like id=123,src=path/to/file
+      secrets_args+=("${arg}")
+    else
+      # Assume this is environment variable shorthand like SECRET_ENV
+      secrets_args+=("id=${arg},env=${arg}")
+    fi
   done
+}
+
+read_secrets_with_output() {
+  read_secrets
+
+  echo "${secrets_args[@]}"
 }
 
 # read a plugin property of type [array, string] into a Bash array. Buildkite
