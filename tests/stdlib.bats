@@ -19,6 +19,17 @@ pre_command_hook="$PWD/hooks/pre-command"
   # coverage happens via later tests of compute_tag.
 }
 
+@test "Can read secrets from array" {
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_SECRETS_1="FOO"
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_SECRETS_2="id=1,env=BAR"
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_SECRETS_3="id=2,src=path/to/secret.txt"
+
+  run read_secrets_with_output
+
+  assert_success
+  assert_output "--secret id=FOO,env=FOO --secret id=1,env=BAR --secret id=2,src=path/to/secret.txt"
+}
+
 @test "Can get default image name" {
   export BUILDKITE_ORGANIZATION_SLUG="example-org"
   export BUILDKITE_PIPELINE_SLUG="example-pipeline"

@@ -212,9 +212,25 @@ steps:
       - docker#v3.8.0
 ```
 
-You must have a recent version of Docker with BuildKit enabled to use secrets.
-BuildKit will be enabled automatically if any secrets are present in the
-configuration.
+You can also specify the full `--secret` flag value if you need more control:
+
+```yaml
+steps:
+  - command: echo amaze
+    env:
+      SECRET: wow
+    plugins:
+      - seek-oss/private-npm#v1.2.0:
+          env: SECRET
+      - seek-oss/docker-ecr-cache#v1.10.0:
+          secrets:
+            - id=npmrc,src=.npmrc
+      - docker#v3.8.0
+```
+
+You must have a recent version of Docker with BuildKit support to use secrets.
+This plugin will automatically enable BuildKit via the `DOCKER_BUILDKIT`
+environment variable if any secrets are present in the configuration.
 
 ### Changing the max cache time
 
