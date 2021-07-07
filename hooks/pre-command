@@ -82,3 +82,7 @@ fi || echo "Not found"
 
 # Support using https://github.com/buildkite-plugins/docker-buildkite-plugin without an image by default
 export ${export_env_variable}="${image}:${tag}"
+
+# Support programmatic use of cache image and tag values
+export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_EXPORT_IMAGE="${image}"
+export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_EXPORT_TAG="${tag}"
