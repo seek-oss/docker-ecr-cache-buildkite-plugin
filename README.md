@@ -105,6 +105,39 @@ steps:
       - docker#v3.8.0
 ```
 
+### Building on the resulting image
+
+The resulting image are exported as environment variables:
+
+- `BUILDKITE_PLUGIN_DOCKER_IMAGE` (or whatever is specified per [changing the name of exported variable](#changing-the-name-of-exported-variable)) for the combined `image:tag` value
+- `BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_EXPORT_IMAGE` for the `image` by itself
+- `BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_EXPORT_TAG` for the `tag` by itself
+
+These variables can be used by subsequent plugins and commands in the same build step.
+For example, you may have a command that propagates these variables to another Docker build command:
+
+```yaml
+steps:
+  - command: >-
+      docker build
+      --build-arg BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_EXPORT_IMAGE
+      --build-arg BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_EXPORT_TAG
+      --file Dockerfile.secondary
+    plugins:
+      - seek-oss/docker-ecr-cache#v1.10.0
+```
+
+Your `Dockerfile.secondary` can then [dynamically use these args](https://docs.docker.com/engine/reference/builder/#understand-how-arg-and-from-interact):
+
+```dockerfile
+ARG BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_EXPORT_IMAGE
+ARG BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_EXPORT_TAG
+
+FROM ${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_EXPORT_IMAGE}:${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_EXPORT_TAG}
+
+RUN echo wow
+```
+
 ### Specifying a target step
 
 A [multi-stage Docker build] can be used to reduce an application container to
