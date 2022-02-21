@@ -1,18 +1,16 @@
 login() {
-  local aws_cli_version=$(aws --version 2>&1 | cut -d " " -f1 | cut -d "/" -f2)
+  local account_id=$(aws sts get-caller-identity --query Account --output text)
+  local region=$(get_ecr_region)
 
-  if [[ $aws_cli_version =~ ^1 ]]; then
-    $(aws ecr get-login --no-include-email)
-  else
-    local account_id=$(aws sts get-caller-identity --query Account --output text)
-    local region=$AWS_REGION
-    
-    aws ecr get-login-password \
-      --region "${region}" \
-      | docker login \
-      --username AWS \
-      --password-stdin "${account_id}".dkr.ecr."${region}".amazonaws.com
-  fi
+  aws ecr get-login-password \
+    --region "${region}" \
+    | docker login \
+    --username AWS \
+    --password-stdin "${account_id}".dkr.ecr."${region}".amazonaws.com
+}
+
+get_ecr_region() {
+  echo "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGION:-${AWS_DEFAULT_REGION:-eu-west-1}}"
 }
 
 get_registry_url() {

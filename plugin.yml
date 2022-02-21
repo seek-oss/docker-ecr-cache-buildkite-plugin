@@ -31,4 +31,6 @@ configuration:
       type: string
     registry-hostname:
       type: string
+    region:
+      type: string
   required: []
