@@ -5,7 +5,7 @@ login() {
     $(aws ecr get-login --no-include-email)
   else
     local account_id=$(aws sts get-caller-identity --query Account --output text)
-    local region=$(aws configure get region)
+    local region=$AWS_REGION
     
     aws ecr get-login-password \
       --region "${region}" \

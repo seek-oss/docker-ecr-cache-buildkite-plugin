@@ -93,14 +93,14 @@ pre_command_hook="$PWD/hooks/pre-command"
 }
 
 @test "ECR: Applies lifecycle policy to existing repositories with aws-cli v2" {
+  export AWS_REGION="ap-southeast-2"
   export BUILDKITE_ORGANIZATION_SLUG="example-org"
   export BUILDKITE_PIPELINE_SLUG="example-pipeline"
   local expected_repository_name="build-cache/example-org/example-pipeline"
 
   stub aws \
     "--version : echo 'aws-cli/2.4.15 Python/3.9.2 Linux/5.10.76-linuxkit botocore/1.24.3'" \
-    "sts get-caller-identity --query \"Account\" --output text : echo 1234567891012" \
-    "configure get region : echo ap-southeast-2"  \
+    "sts get-caller-identity --query Account --output text : echo 1234567891012" \
     "ecr get-login-password --region ap-southeast-2 : echo secure-ecr-password" \
     "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].registryId : echo looked up repository" \
     "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].repositoryArn : echo arn:aws:ecr:ap-southeast-2:1234567891012:repository/${expected_repository_name}" \
@@ -133,6 +133,7 @@ pre_command_hook="$PWD/hooks/pre-command"
 }
 
 @test "ECR: Builds new images with tags with aws-cli v2" {
+  export AWS_REGION="ap-southeast-2"
   export BUILDKITE_ORGANIZATION_SLUG="example-org"
   export BUILDKITE_PIPELINE_SLUG="example-pipeline"
   local expected_repository_name="build-cache/example-org/example-pipeline"
@@ -140,8 +141,7 @@ pre_command_hook="$PWD/hooks/pre-command"
 
   stub aws \
     "--version : echo 'aws-cli/2.4.15 Python/3.9.2 Linux/5.10.76-linuxkit botocore/1.24.3'" \
-    "sts get-caller-identity --query \"Account\" --output text : echo 1234567891012" \
-    "configure get region : echo ap-southeast-2"  \
+    "sts get-caller-identity --query Account --output text : echo 1234567891012" \
     "ecr get-login-password --region ap-southeast-2 : echo secure-ecr-password" \
     "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].registryId : echo looked up repository" \
     "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].repositoryArn : echo arn:aws:ecr:ap-southeast-2:1234567891012:repository/${expected_repository_name}" \
