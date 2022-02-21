@@ -1,12 +1,15 @@
 login() {
-  local account_id=$(aws sts get-caller-identity --query Account --output text)
-  local region=$(get_ecr_region)
+  local account_id
+  local region
+  
+  account_id=$(aws sts get-caller-identity --query Account --output text)
+  region=$(get_ecr_region)
 
   aws ecr get-login-password \
     --region "${region}" \
     | docker login \
     --username AWS \
-    --password-stdin "${account_id}".dkr.ecr."${region}".amazonaws.com
+    --password-stdin "${account_id}.dkr.ecr.${region}.amazonaws.com"
 }
 
 get_ecr_region() {
