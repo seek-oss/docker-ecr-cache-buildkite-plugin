@@ -1,5 +1,18 @@
 login() {
-  $(aws ecr get-login --no-include-email)
+  local aws_cli_version=$(aws --version 2>&1 | cut -d " " -f1 | cut -d "/" -f2)
+
+  if [[ $aws_cli_version =~ ^1 ]]; then
+    $(aws ecr get-login --no-include-email)
+  else
+    local account_id=$(aws sts get-caller-identity --query "Account" --output text)
+    local region=$(aws configure get region)
+    
+    aws ecr get-login-password \
+      --region "${region}" \
+      | docker login \
+      --username AWS \
+      --password-stdin "${account_id}".dkr.ecr."${region}".amazonaws.com
+  fi
 }
 
 get_registry_url() {
