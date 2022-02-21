@@ -4,7 +4,7 @@ login() {
   if [[ $aws_cli_version =~ ^1 ]]; then
     $(aws ecr get-login --no-include-email)
   else
-    local account_id=$(aws sts get-caller-identity --query "Account" --output text)
+    local account_id=$(aws sts get-caller-identity --query Account --output text)
     local region=$(aws configure get region)
     
     aws ecr get-login-password \
