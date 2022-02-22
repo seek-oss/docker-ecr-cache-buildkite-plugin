@@ -1,5 +1,19 @@
 login() {
-  $(aws ecr get-login --no-include-email)
+  local account_id
+  local region
+  
+  account_id=$(aws sts get-caller-identity --query Account --output text)
+  region=$(get_ecr_region)
+
+  aws ecr get-login-password \
+    --region "${region}" \
+    | docker login \
+    --username AWS \
+    --password-stdin "${account_id}.dkr.ecr.${region}.amazonaws.com"
+}
+
+get_ecr_region() {
+  echo "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGION:-${AWS_DEFAULT_REGION:-eu-west-1}}"
 }
 
 get_registry_url() {

@@ -280,7 +280,7 @@ steps:
 
 ### Changing the name of exported variable
 
-By default image name and computed tag are exported to the Docker buildkite plugin env variable `BUILDKITE_PLUGIN_DOCKER_IMAGE`. In order to chain the plugin with a different plugin, this can be changed by specifying a `export-env-variable` parameter:
+By default, image name and computed tag are exported to the Docker buildkite plugin env variable `BUILDKITE_PLUGIN_DOCKER_IMAGE`. In order to chain the plugin with a different plugin, this can be changed by specifying a `export-env-variable` parameter:
 
 ```yaml
 steps:
@@ -308,6 +308,19 @@ steps:
           ecr-tags:
             Key: Value
             Key2: Value2
+      - docker#v3.8.0
+```
+
+#### Specifying a region
+
+By default, the plugin uses the region specified in the `AWS_DEFAULT_REGION` environment variable. If this environment variable is not present, it defaults to the `eu-west-1` region. You can optionally specify the region in which you would like your cache to reside in:
+
+```yaml
+steps:
+  - command: echo wow
+    plugins:
+      - seek-oss/docker-ecr-cache#v1.11.0:
+          region: ap-southeast-2
       - docker#v3.8.0
 ```
 
