@@ -71,7 +71,7 @@ steps:
           cache-on:
             - '**/package.json' # monorepo with multiple manifest files
             - yarn.lock
-      - docker#v3.0.1:
+      - docker#v3.12.0:
           volumes:
             - /workdir/node_modules
 ```
