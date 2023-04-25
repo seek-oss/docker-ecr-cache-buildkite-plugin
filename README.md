@@ -27,7 +27,7 @@ RUN echo 'my expensive build step'
 steps:
   - command: echo wow
     plugins:
-      - seek-oss/docker-ecr-cache#v2.0.0
+      - seek-oss/docker-ecr-cache#v2.0.1
       - docker#v3.12.0
 ```
 
@@ -52,7 +52,7 @@ RUN npm install
 steps:
   - command: npm test
     plugins:
-      - seek-oss/docker-ecr-cache#v2.0.0:
+      - seek-oss/docker-ecr-cache#v2.0.1:
           cache-on:
             - package.json # avoid cache hits on stale lockfiles
             - package-lock.json
@@ -67,7 +67,7 @@ The `cache-on` property also supports Bash globbing with `globstar`:
 steps:
   - command: npm test
     plugins:
-      - seek-oss/docker-ecr-cache#v2.0.0:
+      - seek-oss/docker-ecr-cache#v2.0.1:
           cache-on:
             - '**/package.json' # monorepo with multiple manifest files
             - yarn.lock
@@ -84,7 +84,7 @@ It's possible to specify the Dockerfile to use by:
 steps:
   - command: echo wow
     plugins:
-      - seek-oss/docker-ecr-cache#v2.0.0:
+      - seek-oss/docker-ecr-cache#v2.0.1:
           dockerfile: my-dockerfile
       - docker#v3.12.0
 ```
@@ -95,7 +95,7 @@ Alternatively, Dockerfile can be embedded inline:
 steps:
   - command: echo wow
     plugins:
-      - seek-oss/docker-ecr-cache#v2.0.0:
+      - seek-oss/docker-ecr-cache#v2.0.1:
           dockerfile-inline: |
             FROM node:16-alpine
             WORKDIR /workdir
@@ -124,7 +124,7 @@ steps:
       --build-arg BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_EXPORT_TAG
       --file Dockerfile.secondary
     plugins:
-      - seek-oss/docker-ecr-cache#v2.0.0
+      - seek-oss/docker-ecr-cache#v2.0.1
 ```
 
 Your `Dockerfile.secondary` can then [dynamically use these args](https://docs.docker.com/engine/reference/builder/#understand-how-arg-and-from-interact):
@@ -152,7 +152,7 @@ stage to run commands against:
 steps:
   - command: cargo test
     plugins:
-      - seek-oss/docker-ecr-cache#v2.0.0:
+      - seek-oss/docker-ecr-cache#v2.0.1:
           target: build-deps
       - docker#v3.12.0
 ```
@@ -167,7 +167,7 @@ The `context` property can be used to specify a different path.
 steps:
   - command: cargo test
     plugins:
-      - seek-oss/docker-ecr-cache#v2.0.0:
+      - seek-oss/docker-ecr-cache#v2.0.1:
           dockerfile: dockerfiles/test/Dockerfile
           context: '.'
       - docker#v3.12.0
@@ -196,7 +196,7 @@ steps:
     env:
       ARG_1: wow
     plugins:
-      - seek-oss/docker-ecr-cache#v2.0.0:
+      - seek-oss/docker-ecr-cache#v2.0.1:
           build-args:
             - ARG_1
             - ARG_2=such
@@ -211,7 +211,7 @@ steps:
     env:
       ARG_1: wow
     plugins:
-      - seek-oss/docker-ecr-cache#v2.0.0:
+      - seek-oss/docker-ecr-cache#v2.0.1:
           additional-build-args: '--ssh= default=\$SSH_AUTH_SOCK'
       - docker#v3.12.0
 ```
@@ -239,7 +239,7 @@ steps:
     env:
       SECRET: wow
     plugins:
-      - seek-oss/docker-ecr-cache#v2.0.0:
+      - seek-oss/docker-ecr-cache#v2.0.1:
           secrets:
             - SECRET
       - docker#v3.12.0
@@ -255,7 +255,7 @@ steps:
     plugins:
       - seek-oss/private-npm#v1.2.0:
           env: SECRET
-      - seek-oss/docker-ecr-cache#v2.0.0:
+      - seek-oss/docker-ecr-cache#v2.0.1:
           secrets:
             - id=npmrc,src=.npmrc
       - docker#v3.12.0
@@ -273,7 +273,7 @@ By default images are kept in ECR for up to 30 days. This can be changed by spec
 steps:
   - command: echo wow
     plugins:
-      - seek-oss/docker-ecr-cache#v2.0.0:
+      - seek-oss/docker-ecr-cache#v2.0.1:
           max-age-days: 7
       - docker#v3.12.0
 ```
@@ -286,7 +286,7 @@ By default, image name and computed tag are exported to the Docker buildkite plu
 steps:
   - command: echo wow
     plugins:
-      - seek-oss/docker-ecr-cache#v2.0.0:
+      - seek-oss/docker-ecr-cache#v2.0.1:
           export-env-variable: BUILDKITE_PLUGIN_MY_CUSTOM_PLUGIN_CACHE_IMAGE
       - my-custom-plugin#v1.0.0:
 ```
@@ -303,7 +303,7 @@ optionally use a custom repository name:
 steps:
   - command: echo wow
     plugins:
-      - seek-oss/docker-ecr-cache#v2.0.0:
+      - seek-oss/docker-ecr-cache#v2.0.1:
           ecr-name: my-unique-repository-name
           ecr-tags:
             Key: Value
@@ -319,7 +319,7 @@ By default, the plugin uses the region specified in the `AWS_DEFAULT_REGION` env
 steps:
   - command: echo wow
     plugins:
-      - seek-oss/docker-ecr-cache#v2.0.0:
+      - seek-oss/docker-ecr-cache#v2.0.1:
           region: ap-southeast-2
       - docker#v3.12.0
 ```
@@ -361,7 +361,7 @@ Example:
 ```yaml
 - command: echo wow
   plugins:
-    - seek-oss/docker-ecr-cache#v2.0.0:
+    - seek-oss/docker-ecr-cache#v2.0.1:
         registry-provider: gcr
         gcp-project: foo-bar-123456
 ```
