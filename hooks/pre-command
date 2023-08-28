@@ -71,25 +71,25 @@ if ! docker pull "${image}:${tag}"; then
   docker "${image_build_args[@]}" ${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ADDITIONAL_BUILD_ARGS:-} "${context}" ||
     log_fatal "^^^ +++" 1
 
-  echo "--- Pushing tags"
-  echo " - ${tag}"
+  docker tag "${image}:${tag}" "${image}:latest"
+
+  echo "--- Pushing tag ${tag}"
   docker push "${image}:${tag}"
 
-  results=()
-  read_list_property 'TAGS'
-  if [ "${#result[*]}" == "0" ]; then
-    echo " - latest"
-    docker tag "${image}:${tag}" "${image}:latest"
-    docker push "${image}:latest"
-  else
-    for other_tag in ${result[@]+"${result[@]}"}; do
-      echo " - ${other_tag}"
-      docker tag "${image}:${tag}" "${image}:${other_tag}"
-      docker push "${image}:${other_tag}"
-    done
-  fi
-
+  echo "--- Pushing tag latest"
+  docker push "${image}:latest"
 fi || echo "Not found"
+
+results=()
+read_list_property 'TAGS'
+if [ "${#result[*]}" != "0" ]; then
+  for extra_tag in ${result[@]+"${result[@]}"}; do
+    echo "--- Pushing extra tags"
+    echo " - ${extra_tag}"
+    docker tag "${image}:${tag}" "${image}:${extra_tag}"
+    docker push "${image}:${extra_tag}"
+  done
+fi
 
 # Support using https://github.com/buildkite-plugins/docker-buildkite-plugin without an image by default
 export ${export_env_variable}="${image}:${tag}"

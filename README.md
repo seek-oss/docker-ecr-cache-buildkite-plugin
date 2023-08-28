@@ -293,7 +293,7 @@ steps:
 
 ### Specifying tags to apply to the pushed Docker image
 
-By default, the image is tagged with the `latest` tag in addition to the cache key.
+The image is tagged with the cache key and`latest`.
 
 By specifying the `tags` parameter you can specify your own set of tags to apply to the image:
 
@@ -303,11 +303,10 @@ steps:
     plugins:
       - seek-oss/docker-ecr-cache#v2.0.0:
           tags:
-            - latest
             - build-${BUILDKITE_BUILD_NUMBER}
 ```
 
-Specifying your own tags makes it easy to reuse the image later in the pipeline.
+These tags are applied *each time the plugin runs*, whether the image is newly built or already exists and was pulled.
 
 ### AWS ECR specific configuration
 
