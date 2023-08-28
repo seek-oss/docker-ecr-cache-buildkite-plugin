@@ -291,6 +291,23 @@ steps:
       - my-custom-plugin#v1.0.0:
 ```
 
+### Specifying tags to apply to the pushed Docker image
+
+The image is tagged with the cache key and`latest`.
+
+By specifying the `tags` parameter you can specify your own set of tags to apply to the image:
+
+```yaml
+steps:
+  - command: echo wow
+    plugins:
+      - seek-oss/docker-ecr-cache#v2.0.0:
+          tags:
+            - build-${BUILDKITE_BUILD_NUMBER}
+```
+
+These tags are applied *each time the plugin runs*, whether the image is newly built or already exists and was pulled.
+
 ### AWS ECR specific configuration
 
 #### Specifying an ECR repository name

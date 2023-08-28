@@ -80,6 +80,17 @@ if ! docker pull "${image}:${tag}"; then
   docker push "${image}:latest"
 fi || echo "Not found"
 
+results=()
+read_list_property 'TAGS'
+if [ "${#result[*]}" != "0" ]; then
+  for extra_tag in ${result[@]+"${result[@]}"}; do
+    echo "--- Pushing extra tags"
+    echo " - ${extra_tag}"
+    docker tag "${image}:${tag}" "${image}:${extra_tag}"
+    docker push "${image}:${extra_tag}"
+  done
+fi
+
 # Support using https://github.com/buildkite-plugins/docker-buildkite-plugin without an image by default
 export ${export_env_variable}="${image}:${tag}"
 

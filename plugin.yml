@@ -33,4 +33,6 @@ configuration:
       type: string
     region:
       type: string
+    tags:
+      type: [array, string]
   required: []
