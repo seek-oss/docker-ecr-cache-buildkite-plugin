@@ -18,3 +18,8 @@ get_registry_url() {
   fi
   echo "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGISTRY_HOSTNAME}/${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_GCP_PROJECT}/${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_NAME:-"$(get_default_image_name)"}"
 }
+
+image_exists() {
+  # TODO - implement check for cache in GCR
+  return 0
+}

@@ -33,4 +33,6 @@ configuration:
       type: string
     region:
       type: string
+    skip-pull-on-cache:
+      type: boolean
   required: []
