@@ -36,7 +36,7 @@ read_build_args
 secrets_args=()
 read_secrets
 
-if "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_SKIP_PULL_ON_CACHE:-}" == "true" && image_exists "$tag"; then
+if [ "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_SKIP_PULL_ON_CACHE:-}" == "true" ] && image_exists "$tag"; then
   echo "Image exists, skipping pull"
   exit 0;
 fi
