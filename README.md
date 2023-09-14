@@ -69,7 +69,7 @@ steps:
     plugins:
       - seek-oss/docker-ecr-cache#v2.0.0:
           cache-on:
-            - '**/package.json' # monorepo with multiple manifest files
+            - "**/package.json" # monorepo with multiple manifest files
             - yarn.lock
       - docker#v3.12.0:
           volumes:
@@ -169,7 +169,7 @@ steps:
     plugins:
       - seek-oss/docker-ecr-cache#v2.0.0:
           dockerfile: dockerfiles/test/Dockerfile
-          context: '.'
+          context: "."
       - docker#v3.12.0
 ```
 
@@ -324,6 +324,18 @@ steps:
       - docker#v3.12.0
 ```
 
+#### Skipping image pull on image cache hit
+
+By default, the plugin will pull the image when a cache hit is found. In scenarios where you may be using a caching step to ensure that an image exists this may not be required. You can use `skip-pull-on-cache` to allow the plugin to exit early.
+
+```yaml
+steps:
+  - command: echo wow
+    plugins:
+      - seek-oss/docker-ecr-cache#v2.0.0:
+          skip-pull-on-cache: true
+```
+
 #### Required permissions
 
 Below is a sample set of IAM policy statements that will allow this plugin to work:
@@ -348,7 +360,7 @@ Below is a sample set of IAM policy statements that will allow this plugin to wo
 - Sid: AllowGetAuthorizationToken
   Action:
     - ecr:GetAuthorizationToken
-  Resource: '*'
+  Resource: "*"
   Effect: Allow
 ```
 
