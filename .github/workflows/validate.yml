@@ -1,17 +1,8 @@
 name: Validate
 
 on:
-  pull_request:
-
-  push:
-    branches-ignore:
-      - master
-
-  workflow_run:
-    branches:
-      - master
-    types:
-      - completed
+  - pull_request
+  - push
 
 permissions: {}
 
