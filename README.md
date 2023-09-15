@@ -291,6 +291,18 @@ steps:
       - my-custom-plugin#v1.0.0:
 ```
 
+### Skipping image pull from cache
+
+By default, this plugin will pull the image when a cache hit is found. In scenarios where you may be using a caching step to ensure that an image exists for future steps, this may not be required. You can use `skip-pull-from-cache` to allow the plugin to exit early without pulling the image.
+
+```yaml
+steps:
+  - command: echo wow
+    plugins:
+      - seek-oss/docker-ecr-cache#v2.0.0:
+          skip-pull-on-cache: true
+```
+
 ### AWS ECR specific configuration
 
 #### Specifying an ECR repository name
@@ -322,18 +334,6 @@ steps:
       - seek-oss/docker-ecr-cache#v2.0.0:
           region: ap-southeast-2
       - docker#v3.12.0
-```
-
-#### Skipping image pull on image cache hit
-
-By default, the plugin will pull the image when a cache hit is found. In scenarios where you may be using a caching step to ensure that an image exists this may not be required. You can use `skip-pull-on-cache` to allow the plugin to exit early.
-
-```yaml
-steps:
-  - command: echo wow
-    plugins:
-      - seek-oss/docker-ecr-cache#v2.0.0:
-          skip-pull-on-cache: true
 ```
 
 #### Required permissions
