@@ -21,5 +21,5 @@ get_registry_url() {
 
 image_exists() {
   # TODO - implement check for cache in GCR
-  return 1
+  false
 }
