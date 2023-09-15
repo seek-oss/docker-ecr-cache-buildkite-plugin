@@ -69,7 +69,7 @@ steps:
     plugins:
       - seek-oss/docker-ecr-cache#v2.0.0:
           cache-on:
-            - "**/package.json" # monorepo with multiple manifest files
+            - '**/package.json' # monorepo with multiple manifest files
             - yarn.lock
       - docker#v3.12.0:
           volumes:
@@ -169,7 +169,7 @@ steps:
     plugins:
       - seek-oss/docker-ecr-cache#v2.0.0:
           dockerfile: dockerfiles/test/Dockerfile
-          context: "."
+          context: '.'
       - docker#v3.12.0
 ```
 
@@ -360,7 +360,7 @@ Below is a sample set of IAM policy statements that will allow this plugin to wo
 - Sid: AllowGetAuthorizationToken
   Action:
     - ecr:GetAuthorizationToken
-  Resource: "*"
+  Resource: '*'
   Effect: Allow
 ```
 
