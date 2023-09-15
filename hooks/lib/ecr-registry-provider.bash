@@ -42,9 +42,9 @@ image_exists() {
     --output text)"
   
   if [ "$image_meta" == "$image_tag" ]; then
-    return 0
+    true
   else
-    return 1
+    false
   fi
 }
 
