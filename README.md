@@ -300,7 +300,7 @@ steps:
   - command: echo wow
     plugins:
       - seek-oss/docker-ecr-cache#v2.0.0:
-          skip-pull-on-cache: true
+          skip-pull-from-cache: true
 ```
 
 ### AWS ECR specific configuration
