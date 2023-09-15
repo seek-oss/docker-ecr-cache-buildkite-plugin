@@ -41,10 +41,10 @@ image_exists() {
     --query "imageIds[?imageTag=='${image_tag}'].imageTag" \
     --output text)"
   
-  if [ $image_meta == $image_tag ]; then
-    return 1
-  else
+  if [ "$image_meta" == "$image_tag" ]; then
     return 0
+  else
+    return 1
   fi
 }
 

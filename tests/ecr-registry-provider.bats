@@ -188,3 +188,42 @@ pre_command_hook="$PWD/hooks/pre-command"
   unstub docker
   unstub sha1sum
 }
+
+@test "ECR: Calls list-images to check existance of cache" {
+  export AWS_DEFAULT_REGION="ap-southeast-2"
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGION="ap-southeast-1"
+  export BUILDKITE_ORGANIZATION_SLUG="example-org"
+  export BUILDKITE_PIPELINE_SLUG="example-pipeline"
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_SKIP_PULL_FROM_CACHE="true"
+  local expected_repository_name="build-cache/example-org/example-pipeline"
+  local repository_uri="1234567891012.dkr.ecr.ap-southeast-1.amazonaws.com/${expected_repository_name}"
+
+  stub aws \
+    "sts get-caller-identity --query Account --output text : echo 1234567891012" \
+    "ecr get-login-password --region ap-southeast-1 : echo secure-ecr-password" \
+    "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].registryId : echo looked up repository" \
+    "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].repositoryArn : echo arn:aws:ecr:ap-southeast-1:1234567891012:repository/${expected_repository_name}" \
+    "ecr tag-resource * : echo tag existing resource" \
+    "ecr put-lifecycle-policy * : echo put lifecycle policy" \
+    "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].repositoryUri : echo ${repository_uri}" \
+    "ecr list-images --repository-name ${expected_repository_name} --query imageIds[?imageTag==\'deadbee\'].imageTag --output text : echo 'deadbee'"
+
+  stub docker \
+    "login --username AWS --password-stdin 1234567891012.dkr.ecr.ap-southeast-1.amazonaws.com : echo logging in to docker"
+
+  stub sha1sum \
+    "Dockerfile : echo 'sha1sum(Dockerfile)'" \
+    ": echo sha1sum" \
+    ": echo sha1sum" \
+    ": echo deadbeef"
+
+  run "${pre_command_hook}"
+
+  assert_success
+  assert_output --partial "logging in to docker"
+  assert_output --partial "looked up repository"
+  assert_output --partial "Image exists, skipping pull"
+  unstub aws
+  unstub docker
+  unstub sha1sum
+}
