@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 
-load "$BATS_PATH/load.bash"
+load "$BATS_PLUGIN_PATH/load.bash"
 load "$PWD/hooks/lib/stdlib.bash"
 load "$PWD/hooks/lib/gcr-registry-provider.bash"
 

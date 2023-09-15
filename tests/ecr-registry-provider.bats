@@ -3,7 +3,7 @@
 # export AWS_STUB_DEBUG=/dev/tty
 # export DOCKER_STUB_DEBUG=/dev/tty
 
-load "$BATS_PATH/load.bash"
+load "$BATS_PLUGIN_PATH/load.bash"
 load "$PWD/hooks/lib/stdlib.bash"
 load "$PWD/hooks/lib/ecr-registry-provider.bash"
 

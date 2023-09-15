@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 
-load "$BATS_PATH/load.bash"
+load "$BATS_PLUGIN_PATH/load.bash"
 
 # export DOCKER_STUB_DEBUG=/dev/tty
 
