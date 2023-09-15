@@ -1,9 +1,9 @@
 version: '3.4'
 services:
   tests:
-    image: buildkite/plugin-tester
+    image: buildkite/plugin-tester:v1.1.0
     volumes:
-      - ".:/plugin:ro"
+      - '.:/plugin:ro'
     environment:
       - BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_TAGS_SEEK:OWNER:TEAM=Candidate
       - BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_TAGS_MYKEY2=mykeyvalue2
@@ -11,5 +11,4 @@ services:
     image: buildkite/plugin-linter
     command: ['--name', 'seek-oss/docker-ecr-cache']
     volumes:
-      - ".:/plugin:ro"
-
+      - '.:/plugin:ro'
