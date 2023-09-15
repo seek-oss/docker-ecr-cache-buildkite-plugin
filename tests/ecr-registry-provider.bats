@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
-# export AWS_STUB_DEBUG=/dev/tty
-# export DOCKER_STUB_DEBUG=/dev/tty
+export AWS_STUB_DEBUG=/dev/tty
+export DOCKER_STUB_DEBUG=/dev/tty
 
 load "$BATS_PLUGIN_PATH/load.bash"
 load "$PWD/hooks/lib/stdlib.bash"
@@ -20,13 +20,13 @@ pre_command_hook="$PWD/hooks/pre-command"
     "ecr get-login-password --region ap-southeast-2 : echo secure-ecr-password" \
     "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].registryId : echo looked up repository" \
     "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].repositoryArn : echo arn:aws:ecr:ap-southeast-2:1234567891012:repository/${expected_repository_name}" \
-    "ecr tag-resource * : echo tag existing resource" \
-    "ecr put-lifecycle-policy * : echo put lifecycle policy" \
+    "ecr tag-resource --resource-arn arn:aws:ecr:ap-southeast-2:1234567891012:repository/build-cache/example-org/example-pipeline --cli-input-json \* : echo tag existing resource" \
+    "ecr put-lifecycle-policy --repository-name build-cache/example-org/example-pipeline --lifecycle-policy-text \* : echo put lifecycle policy" \
     "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].repositoryUri : echo https://1234567891012.dkr.ecr.ap-southeast-2.amazonaws.com" 
     
   stub docker \
     "login --username AWS --password-stdin 1234567891012.dkr.ecr.ap-southeast-2.amazonaws.com : echo logging in to docker" \
-    "pull : echo pulled image"
+    "pull https://1234567891012.dkr.ecr.ap-southeast-2.amazonaws.com:sha1sum : echo pulled image"
 
   stub sha1sum \
     "Dockerfile : echo 'sha1sum(Dockerfile)'" \
@@ -60,14 +60,14 @@ pre_command_hook="$PWD/hooks/pre-command"
     "ecr get-login-password --region ap-southeast-2 : echo secure-ecr-password" \
     "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].registryId : echo looked up repository" \
     "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].repositoryArn : echo arn:aws:ecr:ap-southeast-2:1234567891012:repository/${expected_repository_name}" \
-    "ecr tag-resource * : echo tag existing resource" \
-    "ecr put-lifecycle-policy * : echo put lifecycle policy" \
+    "ecr tag-resource --resource-arn arn:aws:ecr:ap-southeast-2:1234567891012:repository/build-cache/example-org/example-pipeline --cli-input-json \* : echo tag existing resource" \
+    "ecr put-lifecycle-policy --repository-name build-cache/example-org/example-pipeline --lifecycle-policy-text \* : echo put lifecycle policy" \
     "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].repositoryUri : echo ${repository_uri}" \
 
   stub docker \
     "login --username AWS --password-stdin 1234567891012.dkr.ecr.ap-southeast-2.amazonaws.com : echo logging in to docker" \
-    "pull : echo not found && false" \
-    "build * : echo building docker image" \
+    "pull 1234567891012.dkr.ecr.ap-southeast-2.amazonaws.com/build-cache/example-org/example-pipeline:deadbee : echo not found && false" \
+    "build --file=Dockerfile --tag=1234567891012.dkr.ecr.ap-southeast-2.amazonaws.com/build-cache/example-org/example-pipeline:deadbee . : echo building docker image" \
     "tag ${repository_uri}:deadbee ${repository_uri}:latest : echo tagged latest" \
     "push ${repository_uri}:deadbee : echo pushed deadbeef" \
     "push ${repository_uri}:latest : echo pushed latest"
@@ -106,14 +106,14 @@ pre_command_hook="$PWD/hooks/pre-command"
     "ecr get-login-password --region eu-west-1 : echo secure-ecr-password" \
     "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].registryId : echo looked up repository" \
     "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].repositoryArn : echo arn:aws:ecr:eu-west-1:1234567891012:repository/${expected_repository_name}" \
-    "ecr tag-resource * : echo tag existing resource" \
-    "ecr put-lifecycle-policy * : echo put lifecycle policy" \
+    "ecr tag-resource --resource-arn arn:aws:ecr:eu-west-1:1234567891012:repository/build-cache/example-org/example-pipeline --cli-input-json \* : echo tag existing resource" \
+    "ecr put-lifecycle-policy --repository-name build-cache/example-org/example-pipeline --lifecycle-policy-text \* : echo put lifecycle policy" \
     "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].repositoryUri : echo ${repository_uri}" \
 
   stub docker \
     "login --username AWS --password-stdin 1234567891012.dkr.ecr.eu-west-1.amazonaws.com : echo logging in to docker" \
-    "pull : echo not found && false" \
-    "build * : echo building docker image" \
+    "pull 1234567891012.dkr.ecr.ap-southeast-2.amazonaws.com/build-cache/example-org/example-pipeline:deadbee : echo not found && false" \
+    "build --file=Dockerfile --tag=1234567891012.dkr.ecr.eu-west-1.amazonaws.com/build-cache/example-org/example-pipeline:deadbee . : echo building docker image" \
     "tag ${repository_uri}:deadbee ${repository_uri}:latest : echo tagged latest" \
     "push ${repository_uri}:deadbee : echo pushed deadbeef" \
     "push ${repository_uri}:latest : echo pushed latest"
@@ -154,14 +154,14 @@ pre_command_hook="$PWD/hooks/pre-command"
     "ecr get-login-password --region ap-southeast-1 : echo secure-ecr-password" \
     "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].registryId : echo looked up repository" \
     "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].repositoryArn : echo arn:aws:ecr:ap-southeast-1:1234567891012:repository/${expected_repository_name}" \
-    "ecr tag-resource * : echo tag existing resource" \
-    "ecr put-lifecycle-policy * : echo put lifecycle policy" \
+    "ecr tag-resource --resource-arn arn:aws:ecr:ap-southeast-2:1234567891012:repository/build-cache/example-org/example-pipeline --cli-input-json \* : echo tag existing resource" \
+    "ecr put-lifecycle-policy --repository-name build-cache/example-org/example-pipeline --lifecycle-policy-text \* : echo put lifecycle policy" \
     "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].repositoryUri : echo ${repository_uri}" \
 
   stub docker \
     "login --username AWS --password-stdin 1234567891012.dkr.ecr.ap-southeast-1.amazonaws.com : echo logging in to docker" \
-    "pull : echo not found && false" \
-    "build * : echo building docker image" \
+    "pull 1234567891012.dkr.ecr.ap-southeast-2.amazonaws.com/build-cache/example-org/example-pipeline:deadbee : echo not found && false" \
+    "build --file=Dockerfile --tag=1234567891012.dkr.ecr.ap-southeast-2.amazonaws.com/build-cache/example-org/example-pipeline:deadbee . : echo building docker image" \
     "tag ${repository_uri}:deadbee ${repository_uri}:latest : echo tagged latest" \
     "push ${repository_uri}:deadbee : echo pushed deadbeef" \
     "push ${repository_uri}:latest : echo pushed latest"
