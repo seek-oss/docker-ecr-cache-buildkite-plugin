@@ -1,7 +1,7 @@
 version: '3.4'
 services:
   tests:
-    image: buildkite/plugin-tester:v2.0.0
+    image: buildkite/plugin-tester:v4.1.0
     volumes:
       - '.:/plugin:ro'
     environment:
