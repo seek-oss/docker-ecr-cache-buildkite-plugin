@@ -69,14 +69,14 @@ pre_command_hook="$PWD/hooks/pre-command"
     "pull 1234567891012.dkr.ecr.ap-southeast-2.amazonaws.com/build-cache/example-org/example-pipeline:deadbee : echo not found && false" \
     "build --file=Dockerfile --tag=1234567891012.dkr.ecr.ap-southeast-2.amazonaws.com/build-cache/example-org/example-pipeline:deadbee . : echo building docker image" \
     "tag ${repository_uri}:deadbee ${repository_uri}:latest : echo tagged latest" \
-    "push ${repository_uri}:deadbee : echo pushed deadbeef" \
+    "push ${repository_uri}:deadbee : echo pushed deadbee" \
     "push ${repository_uri}:latest : echo pushed latest"
 
   stub sha1sum \
     "Dockerfile : echo 'sha1sum(Dockerfile)'" \
     ": echo sha1sum" \
     ": echo sha1sum" \
-    ": echo deadbeef"
+    ": echo deadbee"
 
   run "${pre_command_hook}"
 
@@ -87,7 +87,7 @@ pre_command_hook="$PWD/hooks/pre-command"
   assert_output --partial "tag existing resource"
   assert_output --partial "put lifecycle policy"
   assert_output --partial "tagged latest"
-  assert_output --partial "pushed deadbeef"
+  assert_output --partial "pushed deadbee"
   assert_output --partial "pushed latest"
 
   unstub aws
@@ -115,14 +115,14 @@ pre_command_hook="$PWD/hooks/pre-command"
     "pull 1234567891012.dkr.ecr.eu-west-1.amazonaws.com/build-cache/example-org/example-pipeline:deadbee : echo not found && false" \
     "build --file=Dockerfile --tag=1234567891012.dkr.ecr.eu-west-1.amazonaws.com/build-cache/example-org/example-pipeline:deadbee . : echo building docker image" \
     "tag ${repository_uri}:deadbee ${repository_uri}:latest : echo tagged latest" \
-    "push ${repository_uri}:deadbee : echo pushed deadbeef" \
+    "push ${repository_uri}:deadbee : echo pushed deadbee" \
     "push ${repository_uri}:latest : echo pushed latest"
 
   stub sha1sum \
     "Dockerfile : echo 'sha1sum(Dockerfile)'" \
     ": echo sha1sum" \
     ": echo sha1sum" \
-    ": echo deadbeef"
+    ": echo deadbee"
 
   run "${pre_command_hook}"
 
@@ -133,7 +133,7 @@ pre_command_hook="$PWD/hooks/pre-command"
   assert_output --partial "tag existing resource"
   assert_output --partial "put lifecycle policy"
   assert_output --partial "tagged latest"
-  assert_output --partial "pushed deadbeef"
+  assert_output --partial "pushed deadbee"
   assert_output --partial "pushed latest"
 
   unstub aws
@@ -163,14 +163,14 @@ pre_command_hook="$PWD/hooks/pre-command"
     "pull 1234567891012.dkr.ecr.ap-southeast-1.amazonaws.com/build-cache/example-org/example-pipeline:deadbee : echo not found && false" \
     "build --file=Dockerfile --tag=1234567891012.dkr.ecr.ap-southeast-1.amazonaws.com/build-cache/example-org/example-pipeline:deadbee . : echo building docker image" \
     "tag ${repository_uri}:deadbee ${repository_uri}:latest : echo tagged latest" \
-    "push ${repository_uri}:deadbee : echo pushed deadbeef" \
+    "push ${repository_uri}:deadbee : echo pushed deadbee" \
     "push ${repository_uri}:latest : echo pushed latest"
 
   stub sha1sum \
     "Dockerfile : echo 'sha1sum(Dockerfile)'" \
     ": echo sha1sum" \
     ": echo sha1sum" \
-    ": echo deadbeef"
+    ": echo deadbee"
 
   run "${pre_command_hook}"
 
@@ -181,7 +181,7 @@ pre_command_hook="$PWD/hooks/pre-command"
   assert_output --partial "tag existing resource"
   assert_output --partial "put lifecycle policy"
   assert_output --partial "tagged latest"
-  assert_output --partial "pushed deadbeef"
+  assert_output --partial "pushed deadbee"
   assert_output --partial "pushed latest"
 
   unstub aws
@@ -203,8 +203,8 @@ pre_command_hook="$PWD/hooks/pre-command"
     "ecr get-login-password --region ap-southeast-1 : echo secure-ecr-password" \
     "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].registryId : echo looked up repository" \
     "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].repositoryArn : echo arn:aws:ecr:ap-southeast-1:1234567891012:repository/${expected_repository_name}" \
-    "ecr tag-resource * : echo tag existing resource" \
-    "ecr put-lifecycle-policy * : echo put lifecycle policy" \
+    "ecr tag-resource --resource-arn arn:aws:ecr:ap-southeast-1:1234567891012:repository/build-cache/example-org/example-pipeline --cli-input-json \* : echo tag existing resource" \
+    "ecr put-lifecycle-policy --repository-name build-cache/example-org/example-pipeline --lifecycle-policy-text \* : echo put lifecycle policy" \
     "ecr describe-repositories --repository-names ${expected_repository_name} --output text --query repositories[0].repositoryUri : echo ${repository_uri}" \
     "ecr list-images --repository-name ${expected_repository_name} --query imageIds[?imageTag==\'deadbee\'].imageTag --output text : echo 'deadbee'"
 
@@ -215,7 +215,7 @@ pre_command_hook="$PWD/hooks/pre-command"
     "Dockerfile : echo 'sha1sum(Dockerfile)'" \
     ": echo sha1sum" \
     ": echo sha1sum" \
-    ": echo deadbeef"
+    ": echo deadbee"
 
   run "${pre_command_hook}"
 
