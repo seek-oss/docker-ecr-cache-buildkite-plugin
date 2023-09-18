@@ -189,7 +189,7 @@ pre_command_hook="$PWD/hooks/pre-command"
   unstub sha1sum
 }
 
-@test "ECR: Calls list-images to check existance of cache" {
+@test "ECR: Calls list-images to check existence of cache" {
   export AWS_DEFAULT_REGION="ap-southeast-2"
   export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGION="ap-southeast-1"
   export BUILDKITE_ORGANIZATION_SLUG="example-org"
