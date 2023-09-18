@@ -3,7 +3,7 @@
 # export UNAME_STUB_DEBUG=/dev/tty
 # export SHA1SUM_STUB_DEBUG=/dev/tty
 
-load "$BATS_PATH/load.bash"
+load "$BATS_PLUGIN_PATH/load.bash"
 load "$PWD/hooks/lib/stdlib.bash"
 
 pre_command_hook="$PWD/hooks/pre-command"
