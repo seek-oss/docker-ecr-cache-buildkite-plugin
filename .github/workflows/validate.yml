@@ -1,0 +1,23 @@
+name: Validate
+
+on:
+  - pull_request
+  - push
+
+permissions: {}
+
+jobs:
+  core:
+    name: Lint & Test
+    permissions:
+      checks: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Test
+        run: docker compose run --rm tests
+
+      - name: Lint
+        run: docker compose run --rm lint
