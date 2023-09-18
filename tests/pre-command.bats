@@ -97,3 +97,14 @@ pre_command_hook="$PWD/hooks/pre-command"
   unstub mktemp
   unstub docker
 }
+
+@test "Exits 0 if skip-pull-on-cache and image exists" {
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGISTRY_PROVIDER="stub"
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_SKIP_PULL_FROM_CACHE="true"
+  local repository_uri="pretend.host/path/segment/image"
+
+  run "${pre_command_hook}"
+
+  assert_success
+  assert_line "Image exists, skipping pull"
+}

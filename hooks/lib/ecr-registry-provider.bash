@@ -33,6 +33,21 @@ ecr_exists() {
     --query 'repositories[0].registryId'
 }
 
+image_exists() {
+  local repository_name="$(get_ecr_repository_name)"
+  local image_tag="${1}"
+  local image_meta="$(aws ecr list-images \
+    --repository-name "${repository_name}" \
+    --query "imageIds[?imageTag=='${image_tag}'].imageTag" \
+    --output text)"
+  
+  if [ "$image_meta" == "$image_tag" ]; then
+    true
+  else
+    false
+  fi
+}
+
 get_ecr_arn() {
   local repository_name="${1}"
   aws ecr describe-repositories \

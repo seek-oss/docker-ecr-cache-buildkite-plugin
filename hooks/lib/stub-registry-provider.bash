@@ -15,3 +15,7 @@ get_registry_url() {
 compute_tag() {
   echo "stubbed-computed-tag"
 }
+
+image_exists() {
+  echo "stubbed image_exists"
+}
