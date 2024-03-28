@@ -2,6 +2,7 @@
 
 # export UNAME_STUB_DEBUG=/dev/tty
 # export SHA1SUM_STUB_DEBUG=/dev/tty
+# export JQ_STUB_DEBUG=/dev/tty
 
 load "$BATS_PLUGIN_PATH/load.bash"
 load "$PWD/hooks/lib/stdlib.bash"
@@ -157,5 +158,38 @@ pre_command_hook="$PWD/hooks/pre-command"
   assert_line "CACHE_ON"
 
   unstub uname
+  unstub sha1sum
+}
+
+@test "Can compute image tag with cache-on on specific json keys" {
+  # this var leaks in via pre-command
+  target="my-multi-stage-container"
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_CACHE_ON_1="test-package.json#.dependencies,.devDependencies"
+
+  stub uname \
+    "-m : echo my-architecture" \
+    "-m : echo my-architecture"
+  stub jq \
+    "-r .dependencies\,.devDependencies test-package.json : echo '{\"test\":\"123\"}'"
+  stub sha1sum \
+    "pretend-dockerfile : echo sha1sum(pretend-dockerfile)" \
+    ": echo sha1sum(target: my-multi-stage-container)" \
+    ": echo sha1sum(uname: my-architecture)" \
+    ": echo sha1sum(jq: .dependencies\,.devDependencies)" \
+    ": echo sha1sum(hashes so far)"
+
+  run compute_tag "pretend-dockerfile"
+
+  assert_success
+  assert_line "--- Computing tag"
+  assert_line "DOCKERFILE"
+  assert_line "+ pretend-dockerfile:my-multi-stage-container"
+  assert_line "ARCHITECTURE"
+  assert_line "+ my-architecture"
+  assert_line "BUILD_ARGS"
+  assert_line "CACHE_ON"
+
+  unstub uname
+  unstub jq
   unstub sha1sum
 }
