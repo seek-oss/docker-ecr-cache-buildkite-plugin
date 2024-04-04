@@ -76,7 +76,7 @@ steps:
             - /workdir/node_modules
 ```
 
-It also supports caching on specific JSON keys which can be specified after a `#` character using [jq syntax](https://jqlang.github.io/jq/manual/#object-identifier-index). This requires [jq](https://jqlang.github.io/jq/) to be installed on the build agent. You cannot use this in conjunction with the Bash globbing.
+It also supports caching on specific JSON keys which can be specified following a `#` character using [jq syntax](https://jqlang.github.io/jq/manual/#object-identifier-index). This requires [jq](https://jqlang.github.io/jq/) to be installed on the build agent. You cannot use this in conjunction with Bash globbing.
 
 ```yaml
 steps:
