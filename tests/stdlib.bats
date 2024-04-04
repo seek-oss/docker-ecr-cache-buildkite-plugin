@@ -164,18 +164,18 @@ pre_command_hook="$PWD/hooks/pre-command"
 @test "Can compute image tag with cache-on on specific json keys" {
   # this var leaks in via pre-command
   target="my-multi-stage-container"
-  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_CACHE_ON_1="test-package.json#.dependencies,.devDependencies"
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_CACHE_ON_1="test-package.json#.dependencies"
 
   stub uname \
     "-m : echo my-architecture" \
     "-m : echo my-architecture"
   stub jq \
-    "-r .dependencies\,.devDependencies test-package.json : echo '{\"test\":\"123\"}'"
+    "-r .dependencies test-package.json : echo '{\"test\":\"123\"}'"
   stub sha1sum \
     "pretend-dockerfile : echo sha1sum(pretend-dockerfile)" \
     ": echo sha1sum(target: my-multi-stage-container)" \
     ": echo sha1sum(uname: my-architecture)" \
-    ": echo sha1sum(jq: .dependencies\,.devDependencies)" \
+    ": echo sha1sum(jq: .dependencies)" \
     ": echo sha1sum(hashes so far)"
 
   run compute_tag "pretend-dockerfile"

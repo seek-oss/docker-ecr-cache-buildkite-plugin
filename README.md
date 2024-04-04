@@ -76,7 +76,7 @@ steps:
             - /workdir/node_modules
 ```
 
-It also supports caching on specific JSON keys which are specified using `#`. This requires `jq` to be installed on the build agent. You cannot use this in conjunction with the Bash globbing.
+It also supports caching on specific JSON keys which can be specified after a `#` character using [jq syntax](https://jqlang.github.io/jq/manual/#object-identifier-index). This requires [jq](https://jqlang.github.io/jq/) to be installed on the build agent. You cannot use this in conjunction with the Bash globbing.
 
 ```yaml
 steps:
@@ -85,7 +85,8 @@ steps:
       - seek-oss/docker-ecr-cache#v2.1.1:
           cache-on:
             # package.json dependencies and devDependencies keys
-            - package.json#.dependencies,.devDependencies
+            - package.json#.dependencies
+            - package.json#.devDependencies
             - yarn.lock
       - docker#v3.12.0:
           volumes:
