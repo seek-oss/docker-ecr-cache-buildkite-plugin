@@ -84,9 +84,9 @@ steps:
     plugins:
       - seek-oss/docker-ecr-cache#v2.1.1:
           cache-on:
-            # package.json dependencies and devDependencies keys
             - package.json#.dependencies
             - package.json#.devDependencies
+            - package.json#.pnpm.overrides
             - yarn.lock
       - docker#v3.12.0:
           volumes:
