@@ -82,7 +82,7 @@ A given entry cannot contain both a jq path and a bash glob.
 
 ```yaml
 steps:
-  - command: npm test
+  - command: pnpm test
     plugins:
       - seek-oss/docker-ecr-cache#v2.2.0:
           cache-on:
