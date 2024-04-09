@@ -86,6 +86,7 @@ steps:
     plugins:
       - seek-oss/docker-ecr-cache#v2.2.0:
           cache-on:
+            - .npmrc
             - package.json#.dependencies
             - package.json#.devDependencies
             - package.json#.pnpm.overrides
