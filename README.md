@@ -76,7 +76,9 @@ steps:
             - /workdir/node_modules
 ```
 
-It also supports caching on specific JSON keys which can be specified following a `#` character using [jq syntax](https://jqlang.github.io/jq/manual/#object-identifier-index). This requires [jq](https://jqlang.github.io/jq/) to be installed on the build agent. You cannot use this in conjunction with Bash globbing.
+It also supports caching on specific JSON keys which can be specified following a `#` character using [jq syntax](https://jqlang.github.io/jq/manual/#object-identifier-index). This requires [jq](https://jqlang.github.io/jq/) to be installed on the build agent. This implementation works by matching on the first `.json#` substring.
+
+A given entry cannot contain both a jq path and a bash glob.
 
 ```yaml
 steps:
@@ -87,7 +89,8 @@ steps:
             - package.json#.dependencies
             - package.json#.devDependencies
             - package.json#.pnpm.overrides
-            - yarn.lock
+            - package.json#.packageManager
+            - pnpm-lock.yaml
       - docker#v3.12.0:
           volumes:
             - /workdir/node_modules
