@@ -28,7 +28,7 @@ steps:
   - command: echo wow
     plugins:
       - seek-oss/docker-ecr-cache#v2.2.0
-      - docker#v3.12.0
+      - docker#v5.10.0
 ```
 
 ### Caching npm packages
@@ -38,25 +38,25 @@ without worrying about Docker layer cache invalidation. You do this by hinting
 when the image should be re-built.
 
 ```dockerfile
-FROM node:10-alpine
+FROM node:20-alpine
 
 WORKDIR /workdir
 
-COPY package.json package-lock.json /workdir
+COPY package.json pnpm-lock.yaml /workdir
 
 # this step downloads the internet
-RUN npm install
+RUN pnpm install
 ```
 
 ```yaml
 steps:
-  - command: npm test
+  - command: pnpm test
     plugins:
       - seek-oss/docker-ecr-cache#v2.2.0:
           cache-on:
             - package.json # avoid cache hits on stale lockfiles
-            - package-lock.json
-      - docker#v3.12.0:
+            - pnpm-lock.yaml
+      - docker#v5.10.0:
           volumes:
             - /workdir/node_modules
 ```
@@ -65,13 +65,13 @@ The `cache-on` property also supports Bash globbing with `globstar`:
 
 ```yaml
 steps:
-  - command: npm test
+  - command: pnpm test
     plugins:
       - seek-oss/docker-ecr-cache#v2.2.0:
           cache-on:
             - '**/package.json' # monorepo with multiple manifest files
-            - yarn.lock
-      - docker#v3.12.0:
+            - pnpm-lock.yaml
+      - docker#v5.10.0:
           volumes:
             - /workdir/node_modules
 ```
@@ -92,7 +92,7 @@ steps:
             - package.json#.packageManager
             - package.json#.pnpm.overrides
             - pnpm-lock.yaml
-      - docker#v3.12.0:
+      - docker#v5.10.0:
           volumes:
             - /workdir/node_modules
 ```
@@ -107,7 +107,7 @@ steps:
     plugins:
       - seek-oss/docker-ecr-cache#v2.2.0:
           dockerfile: my-dockerfile
-      - docker#v3.12.0
+      - docker#v5.10.0
 ```
 
 Alternatively, Dockerfile can be embedded inline:
@@ -118,12 +118,12 @@ steps:
     plugins:
       - seek-oss/docker-ecr-cache#v2.2.0:
           dockerfile-inline: |
-            FROM node:16-alpine
+            FROM node:20-alpine
             WORKDIR /workdir
-            COPY package.json package-lock.json /workdir
-            RUN npm install
+            COPY package.json pnpm-lock.yaml /workdir
+            RUN pnpm install
 
-      - docker#v3.12.0
+      - docker#v5.10.0
 ```
 
 ### Building on the resulting image
@@ -175,7 +175,7 @@ steps:
     plugins:
       - seek-oss/docker-ecr-cache#v2.2.0:
           target: build-deps
-      - docker#v3.12.0
+      - docker#v5.10.0
 ```
 
 ### Specifying build context
@@ -191,7 +191,7 @@ steps:
       - seek-oss/docker-ecr-cache#v2.2.0:
           dockerfile: dockerfiles/test/Dockerfile
           context: '.'
-      - docker#v3.12.0
+      - docker#v5.10.0
 ```
 
 ### Specifying build args
@@ -221,7 +221,7 @@ steps:
           build-args:
             - ARG_1
             - ARG_2=such
-      - docker#v3.12.0
+      - docker#v5.10.0
 ```
 
 Additional `docker build` arguments be passed via the `additional-build-args` setting:
@@ -234,7 +234,7 @@ steps:
     plugins:
       - seek-oss/docker-ecr-cache#v2.2.0:
           additional-build-args: '--ssh= default=\$SSH_AUTH_SOCK'
-      - docker#v3.12.0
+      - docker#v5.10.0
 ```
 
 ### Specifying secrets
@@ -263,7 +263,7 @@ steps:
       - seek-oss/docker-ecr-cache#v2.2.0:
           secrets:
             - SECRET
-      - docker#v3.12.0
+      - docker#v5.10.0
 ```
 
 You can also specify the full `--secret` flag value if you need more control:
@@ -279,7 +279,7 @@ steps:
       - seek-oss/docker-ecr-cache#v2.2.0:
           secrets:
             - id=npmrc,src=.npmrc
-      - docker#v3.12.0
+      - docker#v5.10.0
 ```
 
 You must have a recent version of Docker with BuildKit support to use secrets.
@@ -296,7 +296,7 @@ steps:
     plugins:
       - seek-oss/docker-ecr-cache#v2.2.0:
           max-age-days: 7
-      - docker#v3.12.0
+      - docker#v5.10.0
 ```
 
 ### Changing the name of exported variable
@@ -342,7 +342,7 @@ steps:
           ecr-tags:
             Key: Value
             Key2: Value2
-      - docker#v3.12.0
+      - docker#v5.10.0
 ```
 
 #### Specifying a region
@@ -355,7 +355,7 @@ steps:
     plugins:
       - seek-oss/docker-ecr-cache#v2.2.0:
           region: ap-southeast-2
-      - docker#v3.12.0
+      - docker#v5.10.0
 ```
 
 #### Required permissions
