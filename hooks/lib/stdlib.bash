@@ -100,7 +100,18 @@ compute_tag() {
     echoerr "${glob}"
     for file in ${glob}; do
       echoerr "+ ${file}"
-      sums+="$(sha1sum "${file}")"
+      if [[ "${file}" == *.json#* ]]; then
+        # Extract the file path and keys from the pattern
+        file_path="${file%%#*}"
+        keys=${file#*#}
+
+        # Read the JSON file and calculate sha1sum only for the specified keys
+        value=$(jq -r "${keys}" "${file_path}")
+        sums+="$(echo -n "${value}" | sha1sum)"
+      else
+        # Calculate sha1sum for the whole file
+        sums+="$(sha1sum "${file}")"
+      fi
     done
   done
 
