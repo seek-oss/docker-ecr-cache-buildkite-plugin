@@ -78,7 +78,7 @@ steps:
 
 It also supports caching on specific JSON keys which can be specified following a `#` character using [jq syntax](https://jqlang.github.io/jq/manual/#object-identifier-index). This requires [jq](https://jqlang.github.io/jq/) to be installed on the build agent. This implementation works by matching on the first `.json#` substring.
 
-A given entry cannot contain both a jq path and a bash glob.
+A given entry cannot contain both bash globbing and a jq path.
 
 ```yaml
 steps:
