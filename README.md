@@ -89,8 +89,8 @@ steps:
             - .npmrc
             - package.json#.dependencies
             - package.json#.devDependencies
-            - package.json#.pnpm.overrides
             - package.json#.packageManager
+            - package.json#.pnpm.overrides
             - pnpm-lock.yaml
       - docker#v3.12.0:
           volumes:
