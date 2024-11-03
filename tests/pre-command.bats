@@ -35,7 +35,7 @@ pre_command_hook="$PWD/hooks/pre-command"
 
   stub docker \
     "pull pretend.host/path/segment/image:stubbed-computed-tag : false" \
-    "build --file=Dockerfile --tag=pretend.host/path/segment/image:stubbed-computed-tag . : exit 242"
+    "build --file=Dockerfile --progress=plain --tag=pretend.host/path/segment/image:stubbed-computed-tag . : exit 242"
 
   run "${pre_command_hook}"
 
@@ -53,7 +53,7 @@ pre_command_hook="$PWD/hooks/pre-command"
 
   stub docker \
     "pull pretend.host/path/segment/image:stubbed-computed-tag : false" \
-    "build --file=Dockerfile --tag=pretend.host/path/segment/image:stubbed-computed-tag . : echo building docker image" \
+    "build --file=Dockerfile --progress=plain --tag=pretend.host/path/segment/image:stubbed-computed-tag . : echo building docker image" \
     "tag ${repository_uri}:stubbed-computed-tag ${repository_uri}:latest : echo tagged latest" \
     "push ${repository_uri}:stubbed-computed-tag : echo pushed stubbed-computed-tag" \
     "push ${repository_uri}:latest : echo pushed latest"
@@ -80,7 +80,7 @@ pre_command_hook="$PWD/hooks/pre-command"
 
   stub docker \
     "pull pretend.host/path/segment/image:stubbed-computed-tag : false" \
-    "build --file=$one_time_mktemp/Dockerfile --tag=pretend.host/path/segment/image:stubbed-computed-tag . : echo building docker image" \
+    "build --file=$one_time_mktemp/Dockerfile --progress=plain --tag=pretend.host/path/segment/image:stubbed-computed-tag . : echo building docker image" \
     "tag ${repository_uri}:stubbed-computed-tag ${repository_uri}:latest : echo tagged latest" \
     "push ${repository_uri}:stubbed-computed-tag : echo pushed stubbed-computed-tag" \
     "push ${repository_uri}:latest : echo pushed latest"
