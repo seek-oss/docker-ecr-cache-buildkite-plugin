@@ -90,6 +90,11 @@ compute_tag() {
 
     sums+="$(echo "${arg}" | sha1sum)"
   done
+  
+  if [[ -n "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ADDITIONAL_BUILD_ARGS:-}" ]]; then
+    echoerr 'ADDITIONAL_BUILD_ARGS'
+    sums+="$(echo "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ADDITIONAL_BUILD_ARGS}" | sha1sum)"
+  fi
 
   # expand ** in cache-on properties
   shopt -s globstar
