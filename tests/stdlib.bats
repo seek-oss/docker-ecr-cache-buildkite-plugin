@@ -63,6 +63,7 @@ pre_command_hook="$PWD/hooks/pre-command"
   assert_line "ARCHITECTURE"
   assert_line "+ my-architecture"
   assert_line "BUILD_ARGS"
+  refute_line "ADDITIONAL_BUILD_ARGS"
   assert_line "CACHE_ON"
 
   unstub uname
@@ -91,6 +92,7 @@ pre_command_hook="$PWD/hooks/pre-command"
   assert_line "ARCHITECTURE"
   assert_line "+ my-architecture"
   assert_line "BUILD_ARGS"
+  refute_line "ADDITIONAL_BUILD_ARGS"
   assert_line "CACHE_ON"
 
   unstub uname
@@ -122,6 +124,7 @@ pre_command_hook="$PWD/hooks/pre-command"
   assert_line "+ my-architecture"
   assert_line "BUILD_ARGS"
   assert_line "+ foo=1"
+  refute_line "ADDITIONAL_BUILD_ARGS"
   assert_line "CACHE_ON"
 
   unstub uname
@@ -155,6 +158,7 @@ pre_command_hook="$PWD/hooks/pre-command"
   assert_line "+ my-architecture"
   assert_line "BUILD_ARGS"
   assert_line "+ foo=1"
+  refute_line "ADDITIONAL_BUILD_ARGS"
   assert_line "CACHE_ON"
 
   unstub uname
@@ -187,9 +191,41 @@ pre_command_hook="$PWD/hooks/pre-command"
   assert_line "ARCHITECTURE"
   assert_line "+ my-architecture"
   assert_line "BUILD_ARGS"
+  refute_line "ADDITIONAL_BUILD_ARGS"
   assert_line "CACHE_ON"
 
   unstub uname
   unstub jq
+  unstub sha1sum
+}
+
+@test "Can compute image tag with additional-build-args" {
+  # this var leaks in via pre-command
+  target="my-multi-stage-container"
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ADDITIONAL_BUILD_ARGS='--platform=linux/amd64,linux/arm64'
+
+  stub uname \
+    "-m : echo my-architecture" \
+    "-m : echo my-architecture"
+  stub sha1sum \
+    "pretend-dockerfile : echo sha1sum(pretend-dockerfile)" \
+    ": echo sha1sum(target: my-multi-stage-container)" \
+    ": echo sha1sum(uname: my-architecture)" \
+    ": echo sha1sum(--platform=linux/amd64,linux/arm64)" \
+    ": echo sha1sum(hashes so far)"
+
+  run compute_tag "pretend-dockerfile"
+
+  assert_success
+  assert_line "--- Computing tag"
+  assert_line "DOCKERFILE"
+  assert_line "+ pretend-dockerfile:my-multi-stage-container"
+  assert_line "ARCHITECTURE"
+  assert_line "+ my-architecture"
+  assert_line "BUILD_ARGS"
+  assert_line "ADDITIONAL_BUILD_ARGS"
+  assert_line "CACHE_ON"
+
+  unstub uname
   unstub sha1sum
 }
