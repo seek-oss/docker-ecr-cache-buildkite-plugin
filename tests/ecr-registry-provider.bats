@@ -67,7 +67,7 @@ pre_command_hook="$PWD/hooks/pre-command"
   stub docker \
     "login --username AWS --password-stdin 1234567891012.dkr.ecr.ap-southeast-2.amazonaws.com : echo logging in to docker" \
     "pull 1234567891012.dkr.ecr.ap-southeast-2.amazonaws.com/build-cache/example-org/example-pipeline:deadbee : echo not found && false" \
-    "build --file=Dockerfile --tag=1234567891012.dkr.ecr.ap-southeast-2.amazonaws.com/build-cache/example-org/example-pipeline:deadbee . : echo building docker image" \
+    "build --file=Dockerfile --progress=plain --tag=1234567891012.dkr.ecr.ap-southeast-2.amazonaws.com/build-cache/example-org/example-pipeline:deadbee . : echo building docker image" \
     "tag ${repository_uri}:deadbee ${repository_uri}:latest : echo tagged latest" \
     "push ${repository_uri}:deadbee : echo pushed deadbee" \
     "push ${repository_uri}:latest : echo pushed latest"
@@ -113,7 +113,7 @@ pre_command_hook="$PWD/hooks/pre-command"
   stub docker \
     "login --username AWS --password-stdin 1234567891012.dkr.ecr.eu-west-1.amazonaws.com : echo logging in to docker" \
     "pull 1234567891012.dkr.ecr.eu-west-1.amazonaws.com/build-cache/example-org/example-pipeline:deadbee : echo not found && false" \
-    "build --file=Dockerfile --tag=1234567891012.dkr.ecr.eu-west-1.amazonaws.com/build-cache/example-org/example-pipeline:deadbee . : echo building docker image" \
+    "build --file=Dockerfile --progress=plain --tag=1234567891012.dkr.ecr.eu-west-1.amazonaws.com/build-cache/example-org/example-pipeline:deadbee . : echo building docker image" \
     "tag ${repository_uri}:deadbee ${repository_uri}:latest : echo tagged latest" \
     "push ${repository_uri}:deadbee : echo pushed deadbee" \
     "push ${repository_uri}:latest : echo pushed latest"
@@ -161,7 +161,7 @@ pre_command_hook="$PWD/hooks/pre-command"
   stub docker \
     "login --username AWS --password-stdin 1234567891012.dkr.ecr.ap-southeast-1.amazonaws.com : echo logging in to docker" \
     "pull 1234567891012.dkr.ecr.ap-southeast-1.amazonaws.com/build-cache/example-org/example-pipeline:deadbee : echo not found && false" \
-    "build --file=Dockerfile --tag=1234567891012.dkr.ecr.ap-southeast-1.amazonaws.com/build-cache/example-org/example-pipeline:deadbee . : echo building docker image" \
+    "build --file=Dockerfile --progress=plain --tag=1234567891012.dkr.ecr.ap-southeast-1.amazonaws.com/build-cache/example-org/example-pipeline:deadbee . : echo building docker image" \
     "tag ${repository_uri}:deadbee ${repository_uri}:latest : echo tagged latest" \
     "push ${repository_uri}:deadbee : echo pushed deadbee" \
     "push ${repository_uri}:latest : echo pushed latest"
