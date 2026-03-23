@@ -7,6 +7,9 @@ configuration:
   properties:
     build-args:
       type: [array, string]
+    unhashed-build-args:
+      type: [array, string]
+      description: Build args passed to docker build but excluded from the cache key hash (use for volatile values like auth tokens)
     additional-build-args:
       type: string
     cache-on:

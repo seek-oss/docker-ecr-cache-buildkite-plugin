@@ -20,6 +20,13 @@ read_build_args() {
   done
 }
 
+read_unhashed_build_args() {
+  read_list_property 'UNHASHED_BUILD_ARGS'
+  for arg in ${result[@]+"${result[@]}"}; do
+    unhashed_build_args+=("--build-arg=${arg}")
+  done
+}
+
 read_secrets() {
   read_list_property 'SECRETS'
   for arg in ${result[@]+"${result[@]}"}; do

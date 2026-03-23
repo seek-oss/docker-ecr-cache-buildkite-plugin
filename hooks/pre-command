@@ -33,6 +33,9 @@ context="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_CONTEXT:-"${context_dir}"}"
 build_args=()
 read_build_args
 
+unhashed_build_args=()
+read_unhashed_build_args
+
 secrets_args=()
 read_secrets
 
@@ -51,6 +54,13 @@ if ! docker pull "${image}:${tag}"; then
   fi
   if [[ "${#build_args[@]}" -gt 0 ]]; then
     for ba in "${build_args[@]}"; do
+      image_build_args+=(
+        "${ba}"
+      )
+    done
+  fi
+  if [[ "${#unhashed_build_args[@]}" -gt 0 ]]; then
+    for ba in "${unhashed_build_args[@]}"; do
       image_build_args+=(
         "${ba}"
       )
