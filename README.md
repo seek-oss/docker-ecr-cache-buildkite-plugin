@@ -299,7 +299,7 @@ steps:
       - docker#v5.10.0
 ```
 
-You can also apply a different retention policy specifically to images tagged with the `branch-` prefix:
+You can also apply a different retention policy specifically to images tagged with a configurable prefix (default: `branch-`):
 
 ```yaml
 steps:
@@ -311,7 +311,20 @@ steps:
       - docker#v5.10.0
 ```
 
-**Note on branch image retention**: This plugin defaults to aggressive cleanup of branch images (1 day) to minimize security exposure from temporary images. This prevents branch images from accumulating and creating noise in vulnerability scans, while keeping primary branch images (like master) cached longer for faster deployments. Adjust `max-age-days-branch` if your team needs longer retention for branch images.
+If your tagging convention uses a different prefix, customize it:
+
+```yaml
+steps:
+  - command: echo wow
+    plugins:
+      - seek-oss/docker-ecr-cache#v2.2.1:
+          max-age-days: 30
+          max-age-days-branch: 1
+          tag-prefix-branch: 'feature-'  # Match images tagged with feature-*
+      - docker#v5.10.0
+```
+
+**Note on branch image retention**: This plugin applies aggressive cleanup to images matching the branch tag prefix (default 1 day) to minimize security exposure from temporary images. This prevents branch images from accumulating and creating noise in vulnerability scans, while keeping primary images cached longer for faster deployments. Customize `tag-prefix-branch` and `max-age-days-branch` to match your team's tagging conventions and retention needs.
 
 ### Changing the name of exported variable
 

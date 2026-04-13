@@ -86,6 +86,7 @@ configure_registry_for_image_if_necessary() {
   repository_name="$(get_ecr_repository_name)"
   local max_age_days="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_MAX_AGE_DAYS:-30}"
   local max_age_days_branch="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_MAX_AGE_DAYS_BRANCH:-}"
+  local tag_prefix_branch="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_PREFIX_BRANCH:-branch-}"
   local ecr_tags="$(get_ecr_tags)"
   local num_tags=$(echo $ecr_tags | jq '.tags | length')
 
@@ -103,10 +104,10 @@ configure_registry_for_image_if_necessary() {
   if [ -n "${max_age_days_branch}" ]; then
     rules+='{
       "rulePriority": 1,
-      "description": "Expire branch images older than '"${max_age_days_branch}"' days",
+      "description": "Expire images matching tag prefix '"${tag_prefix_branch}"' older than '"${max_age_days_branch}"' days",
       "selection": {
         "tagStatus": "tagged",
-        "tagPrefixList": ["branch-"],
+        "tagPrefixList": ["'"${tag_prefix_branch}"'"],
         "countType": "sinceImagePushed",
         "countUnit": "days",
         "countNumber": '"${max_age_days_branch}"'
