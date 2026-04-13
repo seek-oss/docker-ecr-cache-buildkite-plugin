@@ -311,7 +311,7 @@ steps:
       - docker#v5.10.0
 ```
 
-This is useful when combined with ECR CVE scanning, as it prevents temporary branch images from accumulating in your repository while keeping primary branch images longer for fast deployments.
+**Note on branch image retention**: This plugin defaults to aggressive cleanup of branch images (1 day) to minimize security exposure from temporary images. This prevents branch images from accumulating and creating noise in vulnerability scans, while keeping primary branch images (like master) cached longer for faster deployments. Adjust `max-age-days-branch` if your team needs longer retention for branch images.
 
 ### Changing the name of exported variable
 
