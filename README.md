@@ -299,6 +299,20 @@ steps:
       - docker#v5.10.0
 ```
 
+You can also apply a different retention policy specifically to images tagged with the `branch-` prefix:
+
+```yaml
+steps:
+  - command: echo wow
+    plugins:
+      - seek-oss/docker-ecr-cache#v2.2.1:
+          max-age-days: 30           # Default for non-branch images
+          max-age-days-branch: 1     # Shorter TTL for branch images
+      - docker#v5.10.0
+```
+
+This is useful when combined with ECR CVE scanning, as it prevents temporary branch images from accumulating in your repository while keeping primary branch images longer for fast deployments.
+
 ### Changing the name of exported variable
 
 By default, image name and computed tag are exported to the Docker buildkite plugin env variable `BUILDKITE_PLUGIN_DOCKER_IMAGE`. In order to chain the plugin with a different plugin, this can be changed by specifying a `export-env-variable` parameter:
@@ -422,7 +436,7 @@ use.
 
 The plugin handles the creation of a dedicated ECR repository for the pipeline
 it runs in. To save on [ECR storage costs] and give images a chance to update/patch, a [lifecycle policy] is
-automatically applied to expire images after 30 days (configurable via `max-age-days`).
+automatically applied to expire images after 30 days (configurable via `max-age-days` and `max-age-days-branch`).
 
 [ecr storage costs]: https://aws.amazon.com/ecr/pricing/
 [lifecycle policy]: https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html

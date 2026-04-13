@@ -21,6 +21,8 @@ configuration:
       type: string
     max-age-days:
       type: number
+    max-age-days-branch:
+      type: number
     export-env-variable:
       type: string
     context:

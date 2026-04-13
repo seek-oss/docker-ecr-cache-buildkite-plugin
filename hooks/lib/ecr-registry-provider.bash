@@ -85,6 +85,7 @@ configure_registry_for_image_if_necessary() {
   local repository_name
   repository_name="$(get_ecr_repository_name)"
   local max_age_days="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_MAX_AGE_DAYS:-30}"
+  local max_age_days_branch="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_MAX_AGE_DAYS_BRANCH:-}"
   local ecr_tags="$(get_ecr_tags)"
   local num_tags=$(echo $ecr_tags | jq '.tags | length')
 
@@ -97,25 +98,41 @@ configure_registry_for_image_if_necessary() {
     fi
   fi
 
-  # As of May 2019 ECR lifecycle policies can only have one rule that targets "any"
-  # Due to this limitation, only the max_age policy is applied
-  policy_text=$(cat <<EOF
-{
-  "rules": [
-    {
+  # Build lifecycle policy with optional branch-specific rule
+  local rules='['
+  if [ -n "${max_age_days_branch}" ]; then
+    rules+='{
       "rulePriority": 1,
-      "description": "Expire images older than ${max_age_days} days",
+      "description": "Expire branch images older than '"${max_age_days_branch}"' days",
       "selection": {
-        "tagStatus": "any",
+        "tagStatus": "tagged",
+        "tagPrefixList": ["branch-"],
         "countType": "sinceImagePushed",
         "countUnit": "days",
-        "countNumber": ${max_age_days}
+        "countNumber": '"${max_age_days_branch}"'
       },
       "action": {
         "type": "expire"
       }
+    },'
+  fi
+  rules+='{
+    "rulePriority": '"$((max_age_days_branch ? 2 : 1))"',
+    "description": "Expire other images older than '"${max_age_days}"' days",
+    "selection": {
+      "tagStatus": "any",
+      "countType": "sinceImagePushed",
+      "countUnit": "days",
+      "countNumber": '"${max_age_days}"'
+    },
+    "action": {
+      "type": "expire"
     }
-  ]
+  }]'
+
+  policy_text=$(cat <<EOF
+{
+  "rules": ${rules}
 }
 EOF
 )
