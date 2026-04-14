@@ -83,8 +83,7 @@ get_ecr_repository_name() {
 
 get_tag_ttl_rules() {
   # Parse tag-ttl patterns from environment and return as JSON
-  # Env vars like BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_BRANCH_=1
-  # become { "branch-": 1 }
+  # { "branch-": 1 }
   local result='{}'
   local default_set=false
   
