@@ -2,8 +2,8 @@ login() {
   echo "stubbed login"
 }
 
-configure_registry_for_image() {
-  echo "stubbed configure_registry_for_image"
+configure_registry_for_image_if_necessary() {
+  echo "stubbed configure_registry_for_image_if_necessary"
 }
 
 get_registry_url() {
