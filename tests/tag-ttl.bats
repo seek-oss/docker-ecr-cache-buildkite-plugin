@@ -164,7 +164,7 @@ pre_command_hook="$PWD/hooks/pre-command"
   assert_output "3"
 }
 
-@test "build_lifecycle_policy: more specific longer prefix gets lower rule priority than shorter one" {
+@test "build_lifecycle_policy: more specific longer prefix gets lower rulePriority value and is evaluated first" {
   local rules='{"branch-": 1, "branch-feature-": 3}'
 
   result="$(build_lifecycle_policy "$rules" 30)"

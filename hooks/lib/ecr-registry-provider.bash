@@ -90,7 +90,7 @@ get_tag_ttl_rules() {
   while IFS='=' read -r name value ; do
     if [[ $name =~ ^BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_ ]] ; then
       # Validate value is a positive integer before use
-      if ! [[ "$value" =~ ^[0-9]+$ ]]; then
+      if ! [[ "$value" =~ ^[1-9][0-9]*$ ]]; then
         log_fatal "tag-ttl value for env var '${name}' must be a positive integer, got: '${value}'" 1
       fi
       # Extract tag prefix: strip env var prefix, convert underscores to hyphens, lowercase
@@ -116,9 +116,10 @@ build_lifecycle_policy() {
   local max_age_days="${2}"
 
   # Build lifecycle policy using jq for safe, injection-free JSON construction.
-  # Sort prefixes by descending length so more specific prefixes get lower rule
-  # priorities (ECR evaluates lower numbers first), preventing a shorter prefix
-  # from shadowing a longer, more specific one (e.g. branch- vs branch-feature-).
+  # Sort prefixes by descending length so more specific prefixes get lower
+  # numeric rulePriority values and are evaluated first by ECR, preventing a
+  # shorter prefix from shadowing a longer, more specific one (e.g. branch-
+  # vs branch-feature-).
   local tag_patterns
   tag_patterns=$(echo "$tag_ttl_rules" | jq -r 'keys | sort_by(-length)[]')
   local rule_priority=1
