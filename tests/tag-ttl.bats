@@ -7,8 +7,6 @@ load "$BATS_PLUGIN_PATH/load.bash"
 load "$PWD/hooks/lib/stdlib.bash"
 load "$PWD/hooks/lib/ecr-registry-provider.bash"
 
-pre_command_hook="$PWD/hooks/pre-command"
-
 # --- Unit tests for get_tag_ttl_rules ---
 
 @test "tag-ttl: default branch- rule TTL is 1 when no tag-ttl config set" {
