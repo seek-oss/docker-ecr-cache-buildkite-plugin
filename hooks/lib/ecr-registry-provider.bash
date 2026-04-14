@@ -116,9 +116,10 @@ build_lifecycle_policy() {
   local max_age_days="${2}"
 
   # Build lifecycle policy using jq for safe, injection-free JSON construction.
-  # Sort prefixes by descending length so more specific prefixes get lower rule
-  # priorities (ECR evaluates lower numbers first), preventing a shorter prefix
-  # from shadowing a longer, more specific one (e.g. branch- vs branch-feature-).
+  # Sort prefixes by descending length so more specific prefixes get lower
+  # numeric rulePriority values and are evaluated first by ECR, preventing a
+  # shorter prefix from shadowing a longer, more specific one (e.g. branch-
+  # vs branch-feature-).
   local tag_patterns
   tag_patterns=$(echo "$tag_ttl_rules" | jq -r 'keys | sort_by(-length)[]')
   local rule_priority=1
