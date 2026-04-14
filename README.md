@@ -299,7 +299,7 @@ These configurations can be changed by specifying `max-age-days` and `tag-ttl` p
 steps:
   - command: echo wow
     plugins:
-      - seek-oss/docker-ecr-cache#v2.2.1:
+      - seek-oss/docker-ecr-cache#v<version>:
           max-age-days: 7 # Override default for non-matching tags
           tag-ttl:
             branch-: 3    # Override default for gantry branches
