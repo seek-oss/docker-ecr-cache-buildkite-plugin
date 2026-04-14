@@ -128,56 +128,56 @@ configure_registry_for_image_if_necessary() {
     fi
   fi
 
-  # Build lifecycle policy rules from tag-ttl mappings
-  local rules='['
+  # Build lifecycle policy using jq for safe, injection-free JSON construction.
+  # Sort prefixes by descending length so more specific prefixes get lower rule
+  # priorities (ECR evaluates lower numbers first), preventing a shorter prefix
+  # from shadowing a longer, more specific one (e.g. branch- vs branch-feature-).
+  local tag_patterns
+  tag_patterns=$(echo "$tag_ttl_rules" | jq -r 'keys | sort_by(-length)[]')
   local rule_priority=1
-  local has_tag_rules=false
-  
-  # Add pattern-specific rules
-  local tag_patterns=$(echo "$tag_ttl_rules" | jq -r 'keys[]')
+  local rules_json='[]'
+
   while IFS= read -r pattern; do
     if [ -n "$pattern" ]; then
-      local ttl=$(echo "$tag_ttl_rules" | jq -r ".\"${pattern}\"")
-      rules+='{
-      "rulePriority": '"${rule_priority}"',
-      "description": "Expire images matching tag prefix '"'"''"${pattern}"''"'"' older than '"${ttl}"' days",
-      "selection": {
-        "tagStatus": "tagged",
-        "tagPrefixList": ["'"${pattern}"'"],
-        "countType": "sinceImagePushed",
-        "countUnit": "days",
-        "countNumber": '"${ttl}"'
-      },
-      "action": {
-        "type": "expire"
-      }
-    },'
+      local ttl
+      ttl=$(echo "$tag_ttl_rules" | jq -r --arg p "${pattern}" '.[$p]')
+      rules_json=$(echo "$rules_json" | jq \
+        --arg pattern "${pattern}" \
+        --argjson ttl "${ttl}" \
+        --argjson priority "${rule_priority}" \
+        '. + [{
+          "rulePriority": $priority,
+          "description": ("Expire images with tag prefix " + $pattern + " older than " + ($ttl | tostring) + " days"),
+          "selection": {
+            "tagStatus": "tagged",
+            "tagPrefixList": [$pattern],
+            "countType": "sinceImagePushed",
+            "countUnit": "days",
+            "countNumber": $ttl
+          },
+          "action": {"type": "expire"}
+        }]')
       rule_priority=$((rule_priority + 1))
-      has_tag_rules=true
     fi
   done <<< "$tag_patterns"
-  
-  # Add catch-all rule for unmatched tags
-  rules+='{
-    "rulePriority": '"${rule_priority}"',
-    "description": "Expire other images older than '"${max_age_days}"' days",
-    "selection": {
-      "tagStatus": "any",
-      "countType": "sinceImagePushed",
-      "countUnit": "days",
-      "countNumber": '"${max_age_days}"'
-    },
-    "action": {
-      "type": "expire"
-    }
-  }]'
 
-  policy_text=$(cat <<EOF
-{
-  "rules": ${rules}
-}
-EOF
-)
+  # Add catch-all rule for unmatched tags
+  rules_json=$(echo "$rules_json" | jq \
+    --argjson max_age "${max_age_days}" \
+    --argjson priority "${rule_priority}" \
+    '. + [{
+      "rulePriority": $priority,
+      "description": ("Expire other images older than " + ($max_age | tostring) + " days"),
+      "selection": {
+        "tagStatus": "any",
+        "countType": "sinceImagePushed",
+        "countUnit": "days",
+        "countNumber": $max_age
+      },
+      "action": {"type": "expire"}
+    }]')
+
+  policy_text=$(jq -n --argjson rules "${rules_json}" '{"rules": $rules}')
 
   # Always set the lifecycle policy to update repositories automatically
   # created before PR #9.
