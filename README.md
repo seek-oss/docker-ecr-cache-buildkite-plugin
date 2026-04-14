@@ -289,11 +289,11 @@ environment variable if any secrets are present in the configuration.
 ### Changing the max cache time
 
 By default images are kept in ECR for up to 30 days.
-Images that have `branch-*` tag are kept for 1 day.
+Images with a `branch-` tag prefix are kept for 1 day by default.
 
-This plugin applies retention rules to images based on their tag prefixes. Branch default minimizes security exposure from temporary images. This prevents branch images from accumulating and creating noise in vulnerability scans, while longer-lived tags can retain images for faster deployments. Customize `tag-ttl` patterns to match your tagging convention and retention requirements for different image types.
+This plugin applies retention rules to images based on their tag prefixes. The short default for `branch-` minimizes security exposure from temporary images, preventing them from accumulating and creating noise in vulnerability scans, while longer-lived tags retain images for faster deployments. Customize `tag-ttl` to set per-prefix TTLs matching your conventions.
 
-These configurations can be changed by specifying a `max-age-days` and `tag-ttl` parameters.
+These configurations can be changed by specifying `max-age-days` and `tag-ttl` parameters.
 
 ```yaml
 steps:
@@ -306,6 +306,8 @@ steps:
             something-else-: 7 
       - docker#v5.10.0
 ```
+
+> **Rule priority**: When multiple prefixes are configured, more specific (longer) prefixes are evaluated first by ECR. For example, if you configure both `example-` and `example-feature-`, images tagged `example-feature-xyz` will match the `example-feature-` rule, not the shorter `example-` rule.
 
 ### Changing the name of exported variable
 

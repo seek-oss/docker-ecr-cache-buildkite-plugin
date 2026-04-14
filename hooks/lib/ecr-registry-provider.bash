@@ -82,27 +82,32 @@ get_ecr_repository_name() {
 }
 
 get_tag_ttl_rules() {
-  # Parse tag-ttl patterns from environment and return as JSON
-  # { "branch-": 1 }
+  # Parse tag-ttl patterns from environment variables and return as a JSON object.
+  # e.g. BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_BRANCH_=1 => { "branch-": 1 }
   local result='{}'
   local default_set=false
-  
+
   while IFS='=' read -r name value ; do
     if [[ $name =~ ^BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_ ]] ; then
-      # Extract pattern name, convert underscores back to dashes
-      local pattern=$(echo "${name}" | sed 's/^BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_//' | tr '_' '-' | tr '[:upper:]' '[:lower:]')
-      result=$(echo "$result" | jq ".\"${pattern}\" = ${value}")
+      # Validate value is a positive integer before use
+      if ! [[ "$value" =~ ^[0-9]+$ ]]; then
+        log_fatal "tag-ttl value for env var '${name}' must be a positive integer, got: '${value}'" 1
+      fi
+      # Extract tag prefix: strip env var prefix, convert underscores to hyphens, lowercase
+      local pattern
+      pattern=$(echo "${name}" | sed 's/^BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_//' | tr '_' '-' | tr '[:upper:]' '[:lower:]')
+      result=$(echo "$result" | jq --arg p "${pattern}" --argjson ttl "${value}" '.[$p] = $ttl')
       if [[ "$pattern" == "branch-" ]]; then
         default_set=true
       fi
     fi
   done < <(env | sort)
-  
-  # Ensure branch- has at least the default TTL of 1 day if not explicitly set
+
+  # Default: expire images with the branch- prefix after 1 day unless explicitly configured
   if [ "$default_set" = false ]; then
-    result=$(echo "$result" | jq ".\"branch-\" = 1")
+    result=$(echo "$result" | jq '."branch-" = 1')
   fi
-  
+
   echo "$result"
 }
 
