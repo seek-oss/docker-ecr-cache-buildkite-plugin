@@ -303,7 +303,7 @@ steps:
           max-age-days: 7 # Override default for non-matching tags
           tag-ttl:
             branch-: 3    # Override default for gantry branches
-            something-else-: 7 
+            something-else-: 7
       - docker#v5.10.0
 ```
 
