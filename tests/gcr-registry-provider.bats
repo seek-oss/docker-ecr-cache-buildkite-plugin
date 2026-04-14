@@ -11,8 +11,8 @@ load "$PWD/hooks/lib/gcr-registry-provider.bash"
   assert_output --partial "Plugin currently assumes"
 }
 
-@test "GCR: Can configure registry for image if necessary" {
-  # Currently a no-op for GCR.
+@test "GCR: Can configure registry for image" {
+  # Always invoked; currently a no-op for GCR.
   run configure_registry_for_image
 
   assert_success
