@@ -81,12 +81,37 @@ get_ecr_repository_name() {
   echo "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_NAME:-"$(get_default_image_name)"}"
 }
 
+get_tag_ttl_rules() {
+  # Parse tag-ttl patterns from environment and return as JSON
+  # Env vars like BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_BRANCH_=1
+  # become { "branch-": 1 }
+  local result='{}'
+  local default_set=false
+  
+  while IFS='=' read -r name value ; do
+    if [[ $name =~ ^BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_ ]] ; then
+      # Extract pattern name, convert underscores back to dashes
+      local pattern=$(echo "${name}" | sed 's/^BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_//' | tr '_' '-' | tr '[:upper:]' '[:lower:]')
+      result=$(echo "$result" | jq ".\"${pattern}\" = ${value}")
+      if [[ "$pattern" == "branch-" ]]; then
+        default_set=true
+      fi
+    fi
+  done < <(env | sort)
+  
+  # Ensure branch- has at least the default TTL of 1 day if not explicitly set
+  if [ "$default_set" = false ]; then
+    result=$(echo "$result" | jq ".\"branch-\" = 1")
+  fi
+  
+  echo "$result"
+}
+
 configure_registry_for_image_if_necessary() {
   local repository_name
   repository_name="$(get_ecr_repository_name)"
   local max_age_days="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_MAX_AGE_DAYS:-30}"
-  local max_age_days_branch="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_MAX_AGE_DAYS_BRANCH:-}"
-  local tag_prefix_branch="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_PREFIX_BRANCH:-branch-}"
+  local tag_ttl_rules="$(get_tag_ttl_rules)"
   local ecr_tags="$(get_ecr_tags)"
   local num_tags=$(echo $ecr_tags | jq '.tags | length')
 
@@ -99,26 +124,38 @@ configure_registry_for_image_if_necessary() {
     fi
   fi
 
-  # Build lifecycle policy with optional branch-specific rule
+  # Build lifecycle policy rules from tag-ttl mappings
   local rules='['
-  if [ -n "${max_age_days_branch}" ]; then
-    rules+='{
-      "rulePriority": 1,
-      "description": "Expire images matching tag prefix '"${tag_prefix_branch}"' older than '"${max_age_days_branch}"' days",
+  local rule_priority=1
+  local has_tag_rules=false
+  
+  # Add pattern-specific rules
+  local tag_patterns=$(echo "$tag_ttl_rules" | jq -r 'keys[]')
+  while IFS= read -r pattern; do
+    if [ -n "$pattern" ]; then
+      local ttl=$(echo "$tag_ttl_rules" | jq -r ".\"${pattern}\"")
+      rules+='{
+      "rulePriority": '"${rule_priority}"',
+      "description": "Expire images matching tag prefix '"'"''"${pattern}"''"'"' older than '"${ttl}"' days",
       "selection": {
         "tagStatus": "tagged",
-        "tagPrefixList": ["'"${tag_prefix_branch}"'"],
+        "tagPrefixList": ["'"${pattern}"'"],
         "countType": "sinceImagePushed",
         "countUnit": "days",
-        "countNumber": '"${max_age_days_branch}"'
+        "countNumber": '"${ttl}"'
       },
       "action": {
         "type": "expire"
       }
     },'
-  fi
+      rule_priority=$((rule_priority + 1))
+      has_tag_rules=true
+    fi
+  done <<< "$tag_patterns"
+  
+  # Add catch-all rule for unmatched tags
   rules+='{
-    "rulePriority": '"$((max_age_days_branch ? 2 : 1))"',
+    "rulePriority": '"${rule_priority}"',
     "description": "Expire other images older than '"${max_age_days}"' days",
     "selection": {
       "tagStatus": "any",

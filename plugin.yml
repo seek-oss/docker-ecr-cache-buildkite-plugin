@@ -21,10 +21,8 @@ configuration:
       type: string
     max-age-days:
       type: number
-    max-age-days-branch:
-      type: number
-    tag-prefix-branch:
-      type: string
+    tag-ttl:
+      type: object
     export-env-variable:
       type: string
     context:

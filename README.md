@@ -299,19 +299,20 @@ steps:
       - docker#v5.10.0
 ```
 
-You can also apply a different retention policy specifically to images tagged with a configurable prefix (default: `branch-`):
+You can apply different retention policies to images matching specific tag prefixes using the `tag-ttl` configuration:
 
 ```yaml
 steps:
   - command: echo wow
     plugins:
       - seek-oss/docker-ecr-cache#v2.2.1:
-          max-age-days: 30           # Default for non-branch images
-          max-age-days-branch: 1     # Shorter TTL for branch images
+          max-age-days: 30           # Default for unmatched tags
+          tag-ttl:
+            branch-: 1               # Expire branch images after 1 day
       - docker#v5.10.0
 ```
 
-If your tagging convention uses a different prefix, customize it:
+Define multiple tag patterns with their own TTLs:
 
 ```yaml
 steps:
@@ -319,12 +320,15 @@ steps:
     plugins:
       - seek-oss/docker-ecr-cache#v2.2.1:
           max-age-days: 30
-          max-age-days-branch: 1
-          tag-prefix-branch: 'feature-'  # Match images tagged with feature-*
+          tag-ttl:
+            branch-: 1               # Branch images: 1 day
+            feature-: 3              # Feature branch images: 3 days
+            staging-: 7              # Staging images: 7 days
+            release-: 90             # Release images: 90 days
       - docker#v5.10.0
 ```
 
-**Note on branch image retention**: This plugin applies aggressive cleanup to images matching the branch tag prefix (default 1 day) to minimize security exposure from temporary images. This prevents branch images from accumulating and creating noise in vulnerability scans, while keeping primary images cached longer for faster deployments. Customize `tag-prefix-branch` and `max-age-days-branch` to match your team's tagging conventions and retention needs.
+**Note on tag TTL policies**: This plugin applies retention rules to images based on their tag prefixes. By default, images tagged with `branch-*` expire after 1 day to minimize security exposure from temporary images. This prevents branch images from accumulating and creating noise in vulnerability scans, while longer-lived tags can retain images for faster deployments. Customize `tag-ttl` patterns to match your tagging convention and retention requirements for different image types.
 
 ### Changing the name of exported variable
 
@@ -449,7 +453,7 @@ use.
 
 The plugin handles the creation of a dedicated ECR repository for the pipeline
 it runs in. To save on [ECR storage costs] and give images a chance to update/patch, a [lifecycle policy] is
-automatically applied to expire images after 30 days (configurable via `max-age-days` and `max-age-days-branch`).
+automatically applied to expire images after 30 days (configurable via `max-age-days` and `tag-ttl`).
 
 [ecr storage costs]: https://aws.amazon.com/ecr/pricing/
 [lifecycle policy]: https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html
