@@ -100,3 +100,95 @@ pre_command_hook="$PWD/hooks/pre-command"
   assert_failure
   assert_output --partial "must be a positive integer"
 }
+
+# --- build_lifecycle_policy tests ---
+
+@test "build_lifecycle_policy: default branch- rule produces correct tagPrefixList and countNumber" {
+  local rules='{"branch-": 1}'
+
+  result="$(build_lifecycle_policy "$rules" 30)"
+
+  # branch- rule
+  run jq -r '.rules[0].selection.tagPrefixList[0]' <<< "$result"
+  assert_output "branch-"
+
+  run jq -r '.rules[0].selection.countNumber' <<< "$result"
+  assert_output "1"
+
+  run jq -r '.rules[0].selection.tagStatus' <<< "$result"
+  assert_output "tagged"
+
+  run jq -r '.rules[0].rulePriority' <<< "$result"
+  assert_output "1"
+}
+
+@test "build_lifecycle_policy: catch-all rule uses max-age-days with tagStatus any" {
+  local rules='{"branch-": 1}'
+
+  result="$(build_lifecycle_policy "$rules" 30)"
+
+  run jq -r '.rules[1].selection.tagStatus' <<< "$result"
+  assert_output "any"
+
+  run jq -r '.rules[1].selection.countNumber' <<< "$result"
+  assert_output "30"
+
+  run jq -r '.rules[1].rulePriority' <<< "$result"
+  assert_output "2"
+}
+
+@test "build_lifecycle_policy: multiple patterns produce correct rule count and ordering" {
+  local rules='{"branch-": 1, "staging-": 7}'
+
+  result="$(build_lifecycle_policy "$rules" 30)"
+
+  # staging- is longer, gets priority 1
+  run jq -r '.rules[0].selection.tagPrefixList[0]' <<< "$result"
+  assert_output "staging-"
+
+  run jq -r '.rules[0].selection.countNumber' <<< "$result"
+  assert_output "7"
+
+  # branch- is shorter, gets priority 2
+  run jq -r '.rules[1].selection.tagPrefixList[0]' <<< "$result"
+  assert_output "branch-"
+
+  run jq -r '.rules[1].selection.countNumber' <<< "$result"
+  assert_output "1"
+
+  # catch-all gets priority 3
+  run jq -r '.rules[2].selection.tagStatus' <<< "$result"
+  assert_output "any"
+
+  run jq -r '.rules | length' <<< "$result"
+  assert_output "3"
+}
+
+@test "build_lifecycle_policy: more specific longer prefix gets lower rule priority than shorter one" {
+  local rules='{"branch-": 1, "branch-feature-": 3}'
+
+  result="$(build_lifecycle_policy "$rules" 30)"
+
+  run jq -r '.rules[0].selection.tagPrefixList[0]' <<< "$result"
+  assert_output "branch-feature-"
+
+  run jq -r '.rules[0].rulePriority' <<< "$result"
+  assert_output "1"
+
+  run jq -r '.rules[1].selection.tagPrefixList[0]' <<< "$result"
+  assert_output "branch-"
+
+  run jq -r '.rules[1].rulePriority' <<< "$result"
+  assert_output "2"
+}
+
+@test "build_lifecycle_policy: output is valid JSON" {
+  local rules='{"branch-": 1}'
+
+  run build_lifecycle_policy "$rules" 30
+
+  assert_success
+  # jq will fail if output is not valid JSON
+  run jq '.' <<< "$output"
+  assert_success
+}

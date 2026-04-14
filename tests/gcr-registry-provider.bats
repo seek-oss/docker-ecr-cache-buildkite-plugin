@@ -13,7 +13,7 @@ load "$PWD/hooks/lib/gcr-registry-provider.bash"
 
 @test "GCR: Can configure registry for image if necessary" {
   # Currently a no-op for GCR.
-  run configure_registry_for_image_if_necessary
+  run configure_registry_for_image
 
   assert_success
   assert_output ""

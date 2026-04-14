@@ -7,7 +7,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib/${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_R
   log_fatal "Failed to source registry-provider. BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGISTRY_PROVIDER must be set to one of [ecr, gcr]" 67
 
 login
-configure_registry_for_image_if_necessary
+configure_registry_for_image
 image="$(get_registry_url)"
 if [ -n "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DOCKERFILE_INLINE:-}" ]
 then

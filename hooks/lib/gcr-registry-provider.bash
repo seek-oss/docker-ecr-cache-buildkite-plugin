@@ -3,7 +3,7 @@ login() {
   echo "Plugin currently assumes that docker-credential-gcr is on PATH and configured. See https://github.com/GoogleCloudPlatform/docker-credential-gcr#configuration-and-usage if later docker pull/push fail."
 }
 
-configure_registry_for_image_if_necessary() {
+configure_registry_for_image() {
   # GCR does not have a concept of a repository for images within a registry like ECR does.
   echo ""
 }
