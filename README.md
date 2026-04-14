@@ -309,6 +309,8 @@ steps:
 
 > **Rule priority**: When multiple prefixes are configured, more specific (longer) prefixes are evaluated first by ECR. For example, if you configure both `example-` and `example-feature-`, images tagged `example-feature-xyz` will match the `example-feature-` rule, not the shorter `example-` rule.
 
+> **Rule limit**: You can configure at most 9 `tag-ttl` prefixes.
+
 ### Changing the name of exported variable
 
 By default, image name and computed tag are exported to the Docker buildkite plugin env variable `BUILDKITE_PLUGIN_DOCKER_IMAGE`. In order to chain the plugin with a different plugin, this can be changed by specifying a `export-env-variable` parameter:

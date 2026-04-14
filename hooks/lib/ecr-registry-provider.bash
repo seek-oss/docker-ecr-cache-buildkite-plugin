@@ -114,6 +114,14 @@ get_tag_ttl_rules() {
 build_lifecycle_policy() {
   local tag_ttl_rules="${1}"
   local max_age_days="${2}"
+    local max_total_rules=10
+    local max_prefix_rules=$((max_total_rules - 1))
+
+    local prefix_rule_count
+    prefix_rule_count=$(echo "$tag_ttl_rules" | jq 'keys | length')
+    if [ "$prefix_rule_count" -gt "$max_prefix_rules" ]; then
+      log_fatal "ECR lifecycle policies support at most ${max_prefix_rules} tag-ttl prefixes (${max_total_rules} total rules including the catch-all rule). Configured: ${prefix_rule_count} prefixes." 1
+    fi
 
   # Sort prefixes by descending length so more specific prefixes get lower
   # numeric rulePriority values and are evaluated first by ECR, preventing a

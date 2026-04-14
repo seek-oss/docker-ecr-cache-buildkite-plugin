@@ -192,3 +192,12 @@ pre_command_hook="$PWD/hooks/pre-command"
   run jq '.' <<< "$output"
   assert_success
 }
+
+@test "build_lifecycle_policy: fails fast when tag-ttl prefix count exceeds ECR rule limit" {
+  local rules='{"p01-":1,"p02-":2,"p03-":3,"p04-":4,"p05-":5,"p06-":6,"p07-":7,"p08-":8,"p09-":9,"p10-":10}'
+
+  run build_lifecycle_policy "$rules" 30
+
+  assert_failure
+  assert_output --partial "support at most 9 tag-ttl prefixes"
+}
