@@ -115,7 +115,6 @@ build_lifecycle_policy() {
   local tag_ttl_rules="${1}"
   local max_age_days="${2}"
 
-  # Build lifecycle policy using jq for safe, injection-free JSON construction.
   # Sort prefixes by descending length so more specific prefixes get lower
   # numeric rulePriority values and are evaluated first by ECR, preventing a
   # shorter prefix from shadowing a longer, more specific one (e.g. branch-
