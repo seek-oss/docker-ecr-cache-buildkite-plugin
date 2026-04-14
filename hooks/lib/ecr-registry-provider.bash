@@ -90,7 +90,7 @@ get_tag_ttl_rules() {
   while IFS='=' read -r name value ; do
     if [[ $name =~ ^BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_ ]] ; then
       # Validate value is a positive integer before use
-      if ! [[ "$value" =~ ^[0-9]+$ ]]; then
+      if ! [[ "$value" =~ ^[1-9][0-9]*$ ]]; then
         log_fatal "tag-ttl value for env var '${name}' must be a positive integer, got: '${value}'" 1
       fi
       # Extract tag prefix: strip env var prefix, convert underscores to hyphens, lowercase
