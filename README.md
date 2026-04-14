@@ -288,47 +288,24 @@ environment variable if any secrets are present in the configuration.
 
 ### Changing the max cache time
 
-By default images are kept in ECR for up to 30 days. This can be changed by specifying a `max-age-days` parameter:
+By default images are kept in ECR for up to 30 days.
+Images that have `branch-*` tag are kept for 1 day.
+
+This plugin applies retention rules to images based on their tag prefixes. Branch default minimizes security exposure from temporary images. This prevents branch images from accumulating and creating noise in vulnerability scans, while longer-lived tags can retain images for faster deployments. Customize `tag-ttl` patterns to match your tagging convention and retention requirements for different image types.
+
+These configurations can be changed by specifying a `max-age-days` and `tag-ttl` parameters.
 
 ```yaml
 steps:
   - command: echo wow
     plugins:
       - seek-oss/docker-ecr-cache#v2.2.1:
-          max-age-days: 7
-      - docker#v5.10.0
-```
-
-You can apply different retention policies to images matching specific tag prefixes using the `tag-ttl` configuration:
-
-```yaml
-steps:
-  - command: echo wow
-    plugins:
-      - seek-oss/docker-ecr-cache#v2.2.1:
-          max-age-days: 30           # Default for unmatched tags
+          max-age-days: 7 # Override default for non-matching tags
           tag-ttl:
-            branch-: 1               # Expire branch images after 1 day
+            branch-: 3    # Override default for gantry branches
+            something-else-: 7 
       - docker#v5.10.0
 ```
-
-Define multiple tag patterns with their own TTLs:
-
-```yaml
-steps:
-  - command: echo wow
-    plugins:
-      - seek-oss/docker-ecr-cache#v2.2.1:
-          max-age-days: 30
-          tag-ttl:
-            branch-: 1               # Branch images: 1 day
-            feature-: 3              # Feature branch images: 3 days
-            staging-: 7              # Staging images: 7 days
-            release-: 90             # Release images: 90 days
-      - docker#v5.10.0
-```
-
-**Note on tag TTL policies**: This plugin applies retention rules to images based on their tag prefixes. By default, images tagged with `branch-*` expire after 1 day to minimize security exposure from temporary images. This prevents branch images from accumulating and creating noise in vulnerability scans, while longer-lived tags can retain images for faster deployments. Customize `tag-ttl` patterns to match your tagging convention and retention requirements for different image types.
 
 ### Changing the name of exported variable
 
