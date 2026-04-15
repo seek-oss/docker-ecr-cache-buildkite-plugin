@@ -16,21 +16,21 @@ load "$PWD/hooks/lib/ecr-registry-provider.bash"
   assert_output "0"
 }
 
-@test "tag-ttl: explicit branch- TTL is included in overrides" {
+@test "tag-ttl: explicit env suffix is preserved as-is" {
   export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_BRANCH_=5
 
   result="$(get_tag_ttl_rules)"
 
-  run jq -r '."branch-"' <<< "$result"
+  run jq -r '."BRANCH_"' <<< "$result"
   assert_output "5"
 }
 
-@test "tag-ttl: explicit branch- TTL does not produce duplicate branch- entries" {
+@test "tag-ttl: explicit env suffix does not produce duplicate entries" {
   export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_BRANCH_=5
 
   result="$(get_tag_ttl_rules)"
 
-  run jq -r '[keys[] | select(. == "branch-")] | length' <<< "$result"
+  run jq -r '[keys[] | select(. == "BRANCH_")] | length' <<< "$result"
   assert_output "1"
 }
 
@@ -41,11 +41,11 @@ load "$PWD/hooks/lib/ecr-registry-provider.bash"
 
   result="$(get_tag_ttl_rules)"
 
-  run jq -r '."branch-"' <<< "$result"
+  run jq -r '."BRANCH_"' <<< "$result"
   assert_output "1"
-  run jq -r '."staging-"' <<< "$result"
+  run jq -r '."STAGING_"' <<< "$result"
   assert_output "7"
-  run jq -r '."release-"' <<< "$result"
+  run jq -r '."RELEASE_"' <<< "$result"
   assert_output "90"
 }
 
@@ -54,18 +54,18 @@ load "$PWD/hooks/lib/ecr-registry-provider.bash"
 
   result="$(get_tag_ttl_rules)"
 
-  run jq -r '."staging-"' <<< "$result"
+  run jq -r '."STAGING_"' <<< "$result"
   assert_output "7"
   run jq -r 'keys | length' <<< "$result"
   assert_output "1"
 }
 
-@test "tag-ttl: underscore in env var name is converted to hyphen in pattern" {
+@test "tag-ttl: underscore and case are preserved in pattern" {
   export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_FEATURE_FLAG_=3
 
   result="$(get_tag_ttl_rules)"
 
-  run jq -r '."feature-flag-"' <<< "$result"
+  run jq -r '."FEATURE_FLAG_"' <<< "$result"
   assert_output "3"
 }
 
@@ -75,12 +75,12 @@ load "$PWD/hooks/lib/ecr-registry-provider.bash"
 
   result="$(get_tag_ttl_rules)"
 
-  # branch-feature- is longer and must appear first in sort_by(-length) order
+  # BRANCH_FEATURE_ is longer and must appear first in sort_by(-length) order
   run jq -r 'keys | sort_by(-length) | .[0]' <<< "$result"
-  assert_output "branch-feature-"
+  assert_output "BRANCH_FEATURE_"
 
   run jq -r 'keys | sort_by(-length) | .[1]' <<< "$result"
-  assert_output "branch-"
+  assert_output "BRANCH_"
 }
 
 @test "tag-ttl: rejects non-numeric TTL value" {

@@ -100,7 +100,7 @@ get_ecr_repository_name() {
 
 get_tag_ttl_rules() {
   # Parse tag-ttl patterns from environment variables and return as a JSON object.
-  # e.g. BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_FEATURE_=3 => { "feature-": 3 }
+  # e.g. BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_FEATURE_=3 => { "FEATURE_": 3 }
   local result='{}'
 
   while IFS='=' read -r name value ; do
@@ -109,9 +109,9 @@ get_tag_ttl_rules() {
       if ! [[ "$value" =~ ^[1-9][0-9]*$ ]]; then
         log_fatal "tag-ttl value for env var '${name}' must be a positive integer, got: '${value}'" 1
       fi
-      # Extract tag prefix: strip env var prefix, convert underscores to hyphens, lowercase
+      # Extract tag prefix exactly as provided by the env var suffix.
       local pattern
-      pattern=$(echo "${name}" | sed 's/^BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_//' | tr '_' '-' | tr '[:upper:]' '[:lower:]')
+      pattern=$(echo "${name}" | sed 's/^BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_//')
       result=$(echo "$result" | jq --arg p "${pattern}" --argjson ttl "${value}" '.[$p] = $ttl')
     fi
   done < <(env | sort)
