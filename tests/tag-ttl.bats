@@ -213,6 +213,24 @@ load "$PWD/hooks/lib/ecr-registry-provider.bash"
   assert_success
 }
 
+@test "build_lifecycle_policy: rejects non-numeric max-age-days with clear error" {
+  local rules='{}'
+
+  run build_lifecycle_policy "$rules" "notanumber"
+
+  assert_failure
+  assert_output --partial "max-age-days must be a positive integer"
+}
+
+@test "build_lifecycle_policy: rejects non-positive max-age-days" {
+  local rules='{}'
+
+  run build_lifecycle_policy "$rules" 0
+
+  assert_failure
+  assert_output --partial "max-age-days must be a positive integer"
+}
+
 @test "build_lifecycle_policy: fails fast when tag-ttl prefix count exceeds ECR rule limit" {
   local rules='{"p01-":1,"p02-":2,"p03-":3,"p04-":4,"p05-":5,"p06-":6,"p07-":7,"p08-":8,"p09-":9,"p10-":10}'
 

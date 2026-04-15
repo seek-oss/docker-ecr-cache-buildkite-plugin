@@ -1,4 +1,5 @@
 ECR_LIFECYCLE_MAX_TOTAL_RULES=10
+POSITIVE_INTEGER_REGEX='^[1-9][0-9]*$'
 ECR_LIFECYCLE_DEFAULT_RULES_JSON=$(cat <<'EOF'
 [
   {
@@ -125,7 +126,7 @@ get_tag_ttl_rules() {
       if [[ -z "${value}" ]]; then
         log_fatal "tag-ttl prefix for env var '${name}' must be non-empty" 1
       fi
-      if ! [[ "$ttl" =~ ^[1-9][0-9]*$ ]]; then
+      if ! [[ "$ttl" =~ $POSITIVE_INTEGER_REGEX ]]; then
         log_fatal "tag-ttl explicit rule '${name}' must have matching positive integer TTL in '${ttl_var}', got: '${ttl}'" 1
       fi
 
@@ -139,6 +140,10 @@ get_tag_ttl_rules() {
 build_lifecycle_policy() {
   local tag_ttl_rules="${1}"
   local max_age_days="${2}"
+
+  if ! [[ "$max_age_days" =~ $POSITIVE_INTEGER_REGEX ]]; then
+    log_fatal "max-age-days must be a positive integer, got: '${max_age_days}'" 1
+  fi
 
   local default_rule_count
   default_rule_count=$(echo "$ECR_LIFECYCLE_DEFAULT_RULES_JSON" | jq 'length')
