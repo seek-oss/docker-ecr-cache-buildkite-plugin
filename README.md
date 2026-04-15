@@ -309,7 +309,7 @@ steps:
 
 > **Rule priority**: When multiple prefixes are configured, more specific (longer) prefixes are evaluated first by ECR. For example, if you configure both `example-` and `example-feature-`, images tagged `example-feature-xyz` will match the `example-feature-` rule, not the shorter `example-` rule.
 
-> **Rule limit**: You can configure at most 9 `tag-ttl` prefixes.
+> **Rule limit**: ECR lifecycle policies allow at most 10 rules total. This plugin always includes default `branch-` and catch-all rules, so you can configure at most 8 additional `tag-ttl` prefixes. If you exceed that limit, the plugin fails before calling `aws ecr`.
 
 ### Changing the name of exported variable
 

@@ -1,3 +1,20 @@
+ECR_LIFECYCLE_MAX_TOTAL_RULES=10
+ECR_LIFECYCLE_DEFAULT_RULES_JSON=$(cat <<'EOF'
+[
+  {
+    "kind": "prefix",
+    "prefix": "branch-",
+    "ttl": 1
+  },
+  {
+    "kind": "catch-all",
+    "ttlFrom": "max-age-days",
+    "defaultTtl": 30
+  }
+]
+EOF
+)
+
 login() {
   local account_id
   local region
@@ -83,9 +100,8 @@ get_ecr_repository_name() {
 
 get_tag_ttl_rules() {
   # Parse tag-ttl patterns from environment variables and return as a JSON object.
-  # e.g. BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_BRANCH_=1 => { "branch-": 1 }
+  # e.g. BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_FEATURE_=3 => { "feature-": 3 }
   local result='{}'
-  local default_set=false
 
   while IFS='=' read -r name value ; do
     if [[ $name =~ ^BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_ ]] ; then
@@ -97,16 +113,8 @@ get_tag_ttl_rules() {
       local pattern
       pattern=$(echo "${name}" | sed 's/^BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_//' | tr '_' '-' | tr '[:upper:]' '[:lower:]')
       result=$(echo "$result" | jq --arg p "${pattern}" --argjson ttl "${value}" '.[$p] = $ttl')
-      if [[ "$pattern" == "branch-" ]]; then
-        default_set=true
-      fi
     fi
   done < <(env | sort)
-
-  # Default: expire images with the branch- prefix after 1 day unless explicitly configured
-  if [ "$default_set" = false ]; then
-    result=$(echo "$result" | jq '."branch-" = 1')
-  fi
 
   echo "$result"
 }
@@ -114,28 +122,45 @@ get_tag_ttl_rules() {
 build_lifecycle_policy() {
   local tag_ttl_rules="${1}"
   local max_age_days="${2}"
-    local max_total_rules=10
-    local max_prefix_rules=$((max_total_rules - 1))
 
-    local prefix_rule_count
-    prefix_rule_count=$(echo "$tag_ttl_rules" | jq 'keys | length')
-    if [ "$prefix_rule_count" -gt "$max_prefix_rules" ]; then
-      log_fatal "ECR lifecycle policies support at most ${max_prefix_rules} tag-ttl prefixes (${max_total_rules} total rules including the catch-all rule). Configured: ${prefix_rule_count} prefixes." 1
-    fi
+  local default_rule_count
+  default_rule_count=$(echo "$ECR_LIFECYCLE_DEFAULT_RULES_JSON" | jq 'length')
+  local max_configurable_prefix_rules=$((ECR_LIFECYCLE_MAX_TOTAL_RULES - default_rule_count))
+
+  # Ensure user-specified prefixes plus always-on defaults never exceed ECR limits.
+  local configurable_prefix_rule_count
+  configurable_prefix_rule_count=$(echo "$tag_ttl_rules" | jq --argjson defaults "$ECR_LIFECYCLE_DEFAULT_RULES_JSON" '
+    ([$defaults[] | select(.kind == "prefix") | .prefix]) as $default_prefixes
+    | [keys[] as $k | select(($default_prefixes | index($k)) | not)]
+    | length
+  ')
+  if [ "$configurable_prefix_rule_count" -gt "$max_configurable_prefix_rules" ]; then
+    log_fatal "ECR lifecycle policies support at most ${max_configurable_prefix_rules} additional tag-ttl prefixes (${ECR_LIFECYCLE_MAX_TOTAL_RULES} total rules, including ${default_rule_count} default rules). Configured additional prefixes: ${configurable_prefix_rule_count}." 1
+  fi
+
+  local default_prefix_rules
+  default_prefix_rules=$(echo "$ECR_LIFECYCLE_DEFAULT_RULES_JSON" | jq '
+    [ .[] | select(.kind == "prefix") | {(.prefix): .ttl} ] | add // {}
+  ')
+  local effective_prefix_rules
+  effective_prefix_rules=$(jq -n \
+    --argjson defaults "$default_prefix_rules" \
+    --argjson overrides "$tag_ttl_rules" \
+    '$defaults + $overrides')
 
   # Sort prefixes by descending length so more specific prefixes get lower
   # numeric rulePriority values and are evaluated first by ECR, preventing a
   # shorter prefix from shadowing a longer, more specific one (e.g. branch-
   # vs branch-feature-).
   local tag_patterns
-  tag_patterns=$(echo "$tag_ttl_rules" | jq -r 'keys | sort_by(-length)[]')
+  tag_patterns=$(echo "$effective_prefix_rules" | jq -r 'keys | sort_by(-length)[]')
   local rule_priority=1
   local rules_json='[]'
 
   while IFS= read -r pattern; do
     if [ -n "$pattern" ]; then
       local ttl
-      ttl=$(echo "$tag_ttl_rules" | jq -r --arg p "${pattern}" '.[$p]')
+      ttl=$(echo "$effective_prefix_rules" | jq -r --arg p "${pattern}" '.[$p]')
       rules_json=$(echo "$rules_json" | jq \
         --arg pattern "${pattern}" \
         --argjson ttl "${ttl}" \
@@ -156,9 +181,16 @@ build_lifecycle_policy() {
     fi
   done <<< "$tag_patterns"
 
-  # Add catch-all rule for unmatched tags
+  # Add catch-all rule for unmatched tags (always present).
+  local catch_all_ttl
+  catch_all_ttl=$(echo "$ECR_LIFECYCLE_DEFAULT_RULES_JSON" | jq -r \
+    --argjson max_age "$max_age_days" '
+      (.[] | select(.kind == "catch-all")) as $r
+      | if $r.ttlFrom == "max-age-days" then $max_age else $r.defaultTtl end
+    ')
+
   rules_json=$(echo "$rules_json" | jq \
-    --argjson max_age "${max_age_days}" \
+    --argjson max_age "${catch_all_ttl}" \
     --argjson priority "${rule_priority}" \
     '. + [{
       "rulePriority": $priority,

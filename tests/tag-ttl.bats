@@ -7,25 +7,16 @@ load "$BATS_PLUGIN_PATH/load.bash"
 load "$PWD/hooks/lib/stdlib.bash"
 load "$PWD/hooks/lib/ecr-registry-provider.bash"
 
-pre_command_hook="$PWD/hooks/pre-command"
-
 # --- Unit tests for get_tag_ttl_rules ---
 
-@test "tag-ttl: default branch- rule TTL is 1 when no tag-ttl config set" {
-  result="$(get_tag_ttl_rules)"
-
-  run jq -r '."branch-"' <<< "$result"
-  assert_output "1"
-}
-
-@test "tag-ttl: default branch- rule is the only entry when no tag-ttl config set" {
+@test "tag-ttl: no tag-ttl config produces empty override map" {
   result="$(get_tag_ttl_rules)"
 
   run jq -r 'keys | length' <<< "$result"
-  assert_output "1"
+  assert_output "0"
 }
 
-@test "tag-ttl: explicit branch- TTL overrides the default of 1" {
+@test "tag-ttl: explicit branch- TTL is included in overrides" {
   export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_BRANCH_=5
 
   result="$(get_tag_ttl_rules)"
@@ -58,15 +49,15 @@ pre_command_hook="$PWD/hooks/pre-command"
   assert_output "90"
 }
 
-@test "tag-ttl: custom pattern without branch- still includes the default branch- rule" {
+@test "tag-ttl: custom pattern without branch- only includes configured override" {
   export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_STAGING_=7
 
   result="$(get_tag_ttl_rules)"
 
-  run jq -r '."branch-"' <<< "$result"
-  assert_output "1"
   run jq -r '."staging-"' <<< "$result"
   assert_output "7"
+  run jq -r 'keys | length' <<< "$result"
+  assert_output "1"
 }
 
 @test "tag-ttl: underscore in env var name is converted to hyphen in pattern" {
@@ -104,7 +95,7 @@ pre_command_hook="$PWD/hooks/pre-command"
 # --- build_lifecycle_policy tests ---
 
 @test "build_lifecycle_policy: default branch- rule produces correct tagPrefixList and countNumber" {
-  local rules='{"branch-": 1}'
+  local rules='{}'
 
   result="$(build_lifecycle_policy "$rules" 30)"
 
@@ -123,7 +114,7 @@ pre_command_hook="$PWD/hooks/pre-command"
 }
 
 @test "build_lifecycle_policy: catch-all rule uses max-age-days with tagStatus any" {
-  local rules='{"branch-": 1}'
+  local rules='{}'
 
   result="$(build_lifecycle_policy "$rules" 30)"
 
@@ -183,7 +174,7 @@ pre_command_hook="$PWD/hooks/pre-command"
 }
 
 @test "build_lifecycle_policy: output is valid JSON" {
-  local rules='{"branch-": 1}'
+  local rules='{}'
 
   run build_lifecycle_policy "$rules" 30
 
@@ -199,5 +190,5 @@ pre_command_hook="$PWD/hooks/pre-command"
   run build_lifecycle_policy "$rules" 30
 
   assert_failure
-  assert_output --partial "support at most 9 tag-ttl prefixes"
+  assert_output --partial "support at most 8 additional tag-ttl prefixes"
 }
