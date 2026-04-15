@@ -99,20 +99,37 @@ get_ecr_repository_name() {
 }
 
 get_tag_ttl_rules() {
-  # Parse tag-ttl patterns from environment variables and return as a JSON object.
-  # e.g. BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_FEATURE_=3 => { "FEATURE_": 3 }
+  # Parse tag-ttl configuration from environment variables and return as JSON.
+  #
+  # Supported form:
+  # Explicit array form (preserves exact prefix):
+  #      BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_0_PREFIX=Feature_
+  #      BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_0_TTL=7
+  #    This becomes { "Feature_": 7 }.
   local result='{}'
+  local base_var='BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_'
 
   while IFS='=' read -r name value ; do
-    if [[ $name =~ ^BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_ ]] ; then
-      # Validate value is a positive integer before use
-      if ! [[ "$value" =~ ^[1-9][0-9]*$ ]]; then
-        log_fatal "tag-ttl value for env var '${name}' must be a positive integer, got: '${value}'" 1
+    if [[ $name =~ ^${base_var} ]] && ! [[ $name =~ ^${base_var}[0-9]+_(PREFIX|TTL)$ ]]; then
+      log_fatal "tag-ttl must be configured as an array of {prefix, ttl} entries; unsupported env var '${name}' detected" 1
+    fi
+  done < <(env | sort)
+
+  # Explicit array form preserves raw prefixes exactly as configured.
+  while IFS='=' read -r name value ; do
+    if [[ $name =~ ^${base_var}([0-9]+)_PREFIX$ ]]; then
+      local idx="${BASH_REMATCH[1]}"
+      local ttl_var="${base_var}${idx}_TTL"
+      local ttl="${!ttl_var:-}"
+
+      if [[ -z "${value}" ]]; then
+        log_fatal "tag-ttl prefix for env var '${name}' must be non-empty" 1
       fi
-      # Extract tag prefix exactly as provided by the env var suffix.
-      local pattern
-      pattern=$(echo "${name}" | sed 's/^BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_//')
-      result=$(echo "$result" | jq --arg p "${pattern}" --argjson ttl "${value}" '.[$p] = $ttl')
+      if ! [[ "$ttl" =~ ^[1-9][0-9]*$ ]]; then
+        log_fatal "tag-ttl explicit rule '${name}' must have matching positive integer TTL in '${ttl_var}', got: '${ttl}'" 1
+      fi
+
+      result=$(echo "$result" | jq --arg p "${value}" --argjson ttl "${ttl}" '.[$p] = $ttl')
     fi
   done < <(env | sort)
 

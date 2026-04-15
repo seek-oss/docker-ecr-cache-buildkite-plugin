@@ -16,80 +16,109 @@ load "$PWD/hooks/lib/ecr-registry-provider.bash"
   assert_output "0"
 }
 
-@test "tag-ttl: explicit env suffix is preserved as-is" {
-  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_BRANCH_=5
+@test "tag-ttl: explicit array form preserves raw prefix exactly" {
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_0_PREFIX="Feature_Flag-"
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_0_TTL=3
 
   result="$(get_tag_ttl_rules)"
 
-  run jq -r '."BRANCH_"' <<< "$result"
-  assert_output "5"
+  run jq -r '."Feature_Flag-"' <<< "$result"
+  assert_output "3"
 }
 
-@test "tag-ttl: explicit env suffix does not produce duplicate entries" {
-  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_BRANCH_=5
+@test "tag-ttl: explicit array form does not produce duplicate entries" {
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_0_PREFIX="branch-"
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_0_TTL=5
 
   result="$(get_tag_ttl_rules)"
 
-  run jq -r '[keys[] | select(. == "BRANCH_")] | length' <<< "$result"
+  run jq -r '[keys[] | select(. == "branch-")] | length' <<< "$result"
   assert_output "1"
 }
 
 @test "tag-ttl: multiple patterns each produce their own entry" {
-  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_BRANCH_=1
-  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_STAGING_=7
-  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_RELEASE_=90
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_0_PREFIX="branch-"
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_0_TTL=1
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_1_PREFIX="staging-"
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_1_TTL=7
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_2_PREFIX="release-"
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_2_TTL=90
 
   result="$(get_tag_ttl_rules)"
 
-  run jq -r '."BRANCH_"' <<< "$result"
+  run jq -r '."branch-"' <<< "$result"
   assert_output "1"
-  run jq -r '."STAGING_"' <<< "$result"
+  run jq -r '."staging-"' <<< "$result"
   assert_output "7"
-  run jq -r '."RELEASE_"' <<< "$result"
+  run jq -r '."release-"' <<< "$result"
   assert_output "90"
 }
 
 @test "tag-ttl: custom pattern without branch- only includes configured override" {
-  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_STAGING_=7
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_0_PREFIX="staging-"
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_0_TTL=7
 
   result="$(get_tag_ttl_rules)"
 
-  run jq -r '."STAGING_"' <<< "$result"
+  run jq -r '."staging-"' <<< "$result"
   assert_output "7"
   run jq -r 'keys | length' <<< "$result"
   assert_output "1"
 }
 
-@test "tag-ttl: underscore and case are preserved in pattern" {
-  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_FEATURE_FLAG_=3
+@test "tag-ttl: explicit array form preserves underscores and case" {
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_0_PREFIX="Feature_FLAG_"
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_0_TTL=3
 
   result="$(get_tag_ttl_rules)"
 
-  run jq -r '."FEATURE_FLAG_"' <<< "$result"
+  run jq -r '."Feature_FLAG_"' <<< "$result"
   assert_output "3"
 }
 
 @test "tag-ttl: longer prefixes sort before shorter ones to prevent shadowing" {
-  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_BRANCH_=1
-  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_BRANCH_FEATURE_=3
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_0_PREFIX="branch-"
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_0_TTL=1
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_1_PREFIX="branch-feature-"
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_1_TTL=3
 
   result="$(get_tag_ttl_rules)"
 
-  # BRANCH_FEATURE_ is longer and must appear first in sort_by(-length) order
+  # branch-feature- is longer and must appear first in sort_by(-length) order
   run jq -r 'keys | sort_by(-length) | .[0]' <<< "$result"
-  assert_output "BRANCH_FEATURE_"
+  assert_output "branch-feature-"
 
   run jq -r 'keys | sort_by(-length) | .[1]' <<< "$result"
-  assert_output "BRANCH_"
+  assert_output "branch-"
 }
 
 @test "tag-ttl: rejects non-numeric TTL value" {
-  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_BRANCH_="notanumber"
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_0_PREFIX="branch-"
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_0_TTL="notanumber"
 
   run get_tag_ttl_rules
 
   assert_failure
-  assert_output --partial "must be a positive integer"
+  assert_output --partial "must have matching positive integer TTL"
+}
+
+@test "tag-ttl: rejects unsupported legacy object-form env var" {
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_BRANCH_=1
+
+  run get_tag_ttl_rules
+
+  assert_failure
+  assert_output --partial "must be configured as an array"
+}
+
+@test "tag-ttl: explicit array form requires matching positive integer TTL" {
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_0_PREFIX="branch-"
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_0_TTL=0
+
+  run get_tag_ttl_rules
+
+  assert_failure
+  assert_output --partial "must have matching positive integer TTL"
 }
 
 # --- build_lifecycle_policy tests ---

@@ -22,7 +22,7 @@ configuration:
     max-age-days:
       type: number
     tag-ttl:
-      type: object
+      type: array
     export-env-variable:
       type: string
     context:

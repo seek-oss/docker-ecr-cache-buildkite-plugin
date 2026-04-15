@@ -295,6 +295,8 @@ This plugin applies retention rules to images based on their tag prefixes. The s
 
 These configurations can be changed by specifying `max-age-days` and `tag-ttl` parameters.
 
+Use the array form of `tag-ttl` when you need exact, case-sensitive prefixes preserved as-is:
+
 ```yaml
 steps:
   - command: echo wow
@@ -302,14 +304,16 @@ steps:
       - seek-oss/docker-ecr-cache#v<version>:
           max-age-days: 7 # Override default for non-matching tags
           tag-ttl:
-            branch-: 3    # Override default for gantry branches
-            something-else-: 7
+            - prefix: branch-
+              ttl: 3
+            - prefix: something-else-
+              ttl: 7
       - docker#v5.10.0
 ```
 
 > **Rule priority**: When multiple prefixes are configured, more specific (longer) prefixes are evaluated first by ECR. For example, if you configure both `example-` and `example-feature-`, images tagged `example-feature-xyz` will match the `example-feature-` rule, not the shorter `example-` rule.
 
-> **Prefix handling**: `tag-ttl` keys are used as-is when creating prefix rules (no lowercasing other conversion applies). ECR tag-prefix matching is case-sensitive, ensure you're specifying exact prefix as-is.
+> **Prefix handling**: `tag-ttl` must be configured using array entries (`- prefix: ...`, `ttl: ...`). Prefix values are used exactly as provided, and ECR tag-prefix matching is case-sensitive.
 
 > **Rule limit**: ECR lifecycle policies allow at most 10 rules total. This plugin always includes default `branch-` and catch-all rules, so you can configure at most 8 additional `tag-ttl` prefixes. If you exceed that limit, the plugin fails before calling `aws ecr`.
 
