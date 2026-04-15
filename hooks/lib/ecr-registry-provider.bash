@@ -19,7 +19,7 @@ EOF
 login() {
   local account_id
   local region
-  
+
   account_id=$(aws sts get-caller-identity --query Account --output text)
   region=$(get_ecr_region)
 
@@ -75,24 +75,20 @@ get_ecr_arn() {
 }
 
 get_ecr_tags() {
-local result=$(cat <<EOF
-{
-    "tags": []
-}
-EOF
-)
-  while IFS='=' read -r name _ ; do
+  local result='{"tags": []}'
+
+  while IFS='=' read -r name value ; do
     if [[ $name =~ ^(BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_TAGS_) ]] ; then
       # Handle plain key=value, e.g
       # ecr-tags:
       #   KEY_NAME: 'key-value'
+      local key_name
       key_name=$(echo "${name}" | sed 's/^BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_TAGS_//')
-      key_value=$(env | grep "$name" | sed "s/^$name=//")
-      result=$(echo $result | jq ".tags[.tags| length] |= . + {\"Key\": \"${key_name}\", \"Value\": \"${key_value}\"}")
+      result=$(echo "$result" | jq --arg key "$key_name" --arg value "$value" '.tags[.tags | length] |= . + {"Key": $key, "Value": $value}')
     fi
   done < <(env | sort)
 
-  echo $result
+  echo "$result"
 }
 
 get_ecr_repository_name() {
@@ -100,24 +96,14 @@ get_ecr_repository_name() {
 }
 
 get_tag_ttl_rules() {
-  # Parse tag-ttl configuration from environment variables and return as JSON.
-  #
-  # Supported form:
-  # Explicit array form (preserves exact prefix):
-  #      BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_0_PREFIX=Feature_
-  #      BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_0_TTL=7
-  #    This becomes { "Feature_": 7 }.
   local result='{}'
   local base_var='BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_'
 
   while IFS='=' read -r name value ; do
-    if [[ $name =~ ^${base_var} ]] && ! [[ $name =~ ^${base_var}[0-9]+_(PREFIX|TTL)$ ]]; then
-      log_fatal "tag-ttl must be configured as an array of {prefix, ttl} entries; unsupported env var '${name}' detected" 1
+    if [[ ! $name =~ ^${base_var} ]]; then
+      continue
     fi
-  done < <(env | sort)
 
-  # Explicit array form preserves raw prefixes exactly as configured.
-  while IFS='=' read -r name value ; do
     if [[ $name =~ ^${base_var}([0-9]+)_PREFIX$ ]]; then
       local idx="${BASH_REMATCH[1]}"
       local ttl_var="${base_var}${idx}_TTL"
@@ -131,7 +117,14 @@ get_tag_ttl_rules() {
       fi
 
       result=$(echo "$result" | jq --arg p "${value}" --argjson ttl "${ttl}" '.[$p] = $ttl')
+      continue
     fi
+
+    if [[ $name =~ ^${base_var}[0-9]+_TTL$ ]]; then
+      continue
+    fi
+
+    log_fatal "tag-ttl must be configured as an array of {prefix, ttl} entries; unsupported env var '${name}' detected" 1
   done < <(env | sort)
 
   echo "$result"
@@ -149,7 +142,6 @@ build_lifecycle_policy() {
   default_rule_count=$(echo "$ECR_LIFECYCLE_DEFAULT_RULES_JSON" | jq 'length')
   local max_configurable_prefix_rules=$((ECR_LIFECYCLE_MAX_TOTAL_RULES - default_rule_count))
 
-  # Ensure user-specified prefixes plus always-on defaults never exceed ECR limits.
   local configurable_prefix_rule_count
   configurable_prefix_rule_count=$(echo "$tag_ttl_rules" | jq --argjson defaults "$ECR_LIFECYCLE_DEFAULT_RULES_JSON" '
     ([$defaults[] | select(.kind == "prefix") | .prefix]) as $default_prefixes
@@ -170,40 +162,25 @@ build_lifecycle_policy() {
     --argjson overrides "$tag_ttl_rules" \
     '$defaults + $overrides')
 
-  # Sort prefixes by descending length so more specific prefixes get lower
-  # numeric rulePriority values and are evaluated first by ECR, preventing a
-  # shorter prefix from shadowing a longer, more specific one (e.g. branch-
-  # vs branch-feature-).
-  local tag_patterns
-  tag_patterns=$(echo "$effective_prefix_rules" | jq -r 'keys | sort_by(-length)[]')
-  local rule_priority=1
-  local rules_json='[]'
+  local rules_json
+  rules_json=$(echo "$effective_prefix_rules" | jq '
+    to_entries
+    | sort_by(-(.key | length))
+    | to_entries
+    | map({
+        "rulePriority": (.key + 1),
+        "description": ("Expire images with tag prefix " + .value.key + " older than " + (.value.value | tostring) + " days"),
+        "selection": {
+          "tagStatus": "tagged",
+          "tagPrefixList": [.value.key],
+          "countType": "sinceImagePushed",
+          "countUnit": "days",
+          "countNumber": .value.value
+        },
+        "action": {"type": "expire"}
+      })
+  ')
 
-  while IFS= read -r pattern; do
-    if [ -n "$pattern" ]; then
-      local ttl
-      ttl=$(echo "$effective_prefix_rules" | jq -r --arg p "${pattern}" '.[$p]')
-      rules_json=$(echo "$rules_json" | jq \
-        --arg pattern "${pattern}" \
-        --argjson ttl "${ttl}" \
-        --argjson priority "${rule_priority}" \
-        '. + [{
-          "rulePriority": $priority,
-          "description": ("Expire images with tag prefix " + $pattern + " older than " + ($ttl | tostring) + " days"),
-          "selection": {
-            "tagStatus": "tagged",
-            "tagPrefixList": [$pattern],
-            "countType": "sinceImagePushed",
-            "countUnit": "days",
-            "countNumber": $ttl
-          },
-          "action": {"type": "expire"}
-        }]')
-      rule_priority=$((rule_priority + 1))
-    fi
-  done <<< "$tag_patterns"
-
-  # Add catch-all rule for unmatched tags (always present).
   local catch_all_ttl
   catch_all_ttl=$(echo "$ECR_LIFECYCLE_DEFAULT_RULES_JSON" | jq -r \
     --argjson max_age "$max_age_days" '
@@ -211,9 +188,12 @@ build_lifecycle_policy() {
       | if $r.ttlFrom == "max-age-days" then $max_age else $r.defaultTtl end
     ')
 
+  local catch_all_priority
+  catch_all_priority=$(echo "$rules_json" | jq 'length + 1')
+
   rules_json=$(echo "$rules_json" | jq \
     --argjson max_age "${catch_all_ttl}" \
-    --argjson priority "${rule_priority}" \
+    --argjson priority "${catch_all_priority}" \
     '. + [{
       "rulePriority": $priority,
       "description": ("Expire other images older than " + ($max_age | tostring) + " days"),
@@ -235,14 +215,16 @@ configure_registry_for_image_if_necessary() {
   local max_age_days="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_MAX_AGE_DAYS:-30}"
   local tag_ttl_rules="$(get_tag_ttl_rules)"
   local ecr_tags="$(get_ecr_tags)"
-  local num_tags=$(echo $ecr_tags | jq '.tags | length')
+  local num_tags
+  num_tags=$(echo "$ecr_tags" | jq '.tags | length')
 
   if ! ecr_exists "${repository_name}"; then
     aws ecr create-repository --repository-name "${repository_name}" --cli-input-json "${ecr_tags}"
   else
     if [ "$num_tags" -gt 0 ]; then
-      local ecr_arn=$(get_ecr_arn "${repository_name}")
-      aws ecr tag-resource --resource-arn ${ecr_arn} --cli-input-json "${ecr_tags}"
+      local ecr_arn
+      ecr_arn=$(get_ecr_arn "${repository_name}")
+      aws ecr tag-resource --resource-arn "${ecr_arn}" --cli-input-json "${ecr_tags}"
     fi
   fi
 
