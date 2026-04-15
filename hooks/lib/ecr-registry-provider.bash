@@ -215,21 +215,18 @@ configure_registry_for_image_if_necessary() {
   local max_age_days="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_MAX_AGE_DAYS:-30}"
   local tag_ttl_rules="$(get_tag_ttl_rules)"
   local ecr_tags="$(get_ecr_tags)"
-  local num_tags
-  num_tags=$(echo "$ecr_tags" | jq '.tags | length')
+  local num_tags=$(echo "$ecr_tags" | jq '.tags | length')
 
   if ! ecr_exists "${repository_name}"; then
     aws ecr create-repository --repository-name "${repository_name}" --cli-input-json "${ecr_tags}"
   else
     if [ "$num_tags" -gt 0 ]; then
-      local ecr_arn
-      ecr_arn=$(get_ecr_arn "${repository_name}")
+      local ecr_arn=$(get_ecr_arn "${repository_name}")
       aws ecr tag-resource --resource-arn "${ecr_arn}" --cli-input-json "${ecr_tags}"
     fi
   fi
 
-  local policy_text
-  policy_text=$(build_lifecycle_policy "${tag_ttl_rules}" "${max_age_days}")
+  local policy_text=$(build_lifecycle_policy "${tag_ttl_rules}" "${max_age_days}")
 
   # Always set the lifecycle policy to update repositories automatically
   # created before PR #9.
