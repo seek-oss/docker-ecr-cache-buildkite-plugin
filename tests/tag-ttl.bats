@@ -26,14 +26,21 @@ load "$PWD/hooks/lib/ecr-registry-provider.bash"
   assert_output "3"
 }
 
-@test "tag-ttl: explicit array form does not produce duplicate entries" {
-  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_0_PREFIX="branch-"
-  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_0_TTL=5
+@test "tag-ttl: user-configured branch- overrides default in lifecycle policy" {
+  local tag_ttl_rules='{"branch-": 5}'
 
-  result="$(get_tag_ttl_rules)"
+  result="$(build_lifecycle_policy "$tag_ttl_rules" 30)"
 
-  run jq -r '[keys[] | select(. == "branch-")] | length' <<< "$result"
-  assert_output "1"
+  # Should have exactly 2 rules: branch- override (priority 1) + catch-all (priority 2)
+  run jq -r '.rules | length' <<< "$result"
+  assert_output "2"
+
+  # branch- rule should have user-configured TTL of 5, not default of 1
+  run jq -r '.rules[0].selection.countNumber' <<< "$result"
+  assert_output "5"
+
+  run jq -r '.rules[0].selection.tagPrefixList[0]' <<< "$result"
+  assert_output "branch-"
 }
 
 @test "tag-ttl: multiple patterns each produce their own entry" {
@@ -119,6 +126,24 @@ load "$PWD/hooks/lib/ecr-registry-provider.bash"
 
   assert_failure
   assert_output --partial "must have matching positive integer TTL"
+}
+
+@test "tag-ttl: rejects TTL without matching PREFIX" {
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_0_TTL=5
+
+  run get_tag_ttl_rules
+
+  assert_failure
+  assert_output --partial "has TTL but no PREFIX"
+}
+
+@test "tag-ttl: rejects PREFIX without matching TTL" {
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_0_PREFIX="branch-"
+
+  run get_tag_ttl_rules
+
+  assert_failure
+  assert_output --partial "has PREFIX but no TTL"
 }
 
 # --- build_lifecycle_policy tests ---
