@@ -295,7 +295,7 @@ This plugin applies retention rules to images based on their tag prefixes. The s
 
 These configurations can be changed by specifying `max-age-days` and `tag-ttl` parameters.
 
-Use the array form of `tag-ttl` when you need exact, case-sensitive prefixes preserved as-is:
+Configure `tag-ttl` as an array of rules; prefixes are preserved exactly as provided (case-sensitive):
 
 ```yaml
 steps:
