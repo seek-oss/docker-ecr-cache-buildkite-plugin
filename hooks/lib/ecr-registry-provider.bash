@@ -75,20 +75,24 @@ get_ecr_arn() {
 }
 
 get_ecr_tags() {
-  local result='{"tags": []}'
-
-  while IFS='=' read -r name value ; do
+local result=$(cat <<EOF
+{
+    "tags": []
+}
+EOF
+)
+  while IFS='=' read -r name _ ; do
     if [[ $name =~ ^(BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_TAGS_) ]] ; then
       # Handle plain key=value, e.g
       # ecr-tags:
       #   KEY_NAME: 'key-value'
-      local key_name
       key_name=$(echo "${name}" | sed 's/^BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_TAGS_//')
-      result=$(echo "$result" | jq --arg key "$key_name" --arg value "$value" '.tags[.tags | length] |= . + {"Key": $key, "Value": $value}')
+      key_value=$(env | grep "$name" | sed "s/^$name=//")
+      result=$(echo $result | jq ".tags[.tags| length] |= . + {\"Key\": \"${key_name}\", \"Value\": \"${key_value}\"}")
     fi
   done < <(env | sort)
 
-  echo "$result"
+  echo $result
 }
 
 get_ecr_repository_name() {
