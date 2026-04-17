@@ -288,7 +288,7 @@ environment variable if any secrets are present in the configuration.
 
 ### Changing the max cache time
 
-By default images are kept in ECR for up to 30 days. This can be changed by specifying a `max-age-days` parameter:
+By default images are kept in ECR for up to 7 days. This can be changed by specifying a `max-age-days` parameter:
 
 ```yaml
 steps:
@@ -422,7 +422,7 @@ use.
 
 The plugin handles the creation of a dedicated ECR repository for the pipeline
 it runs in. To save on [ECR storage costs] and give images a chance to update/patch, a [lifecycle policy] is
-automatically applied to expire images after 30 days (configurable via `max-age-days`).
+automatically applied to expire images after 7 days (configurable via `max-age-days`).
 
 [ecr storage costs]: https://aws.amazon.com/ecr/pricing/
 [lifecycle policy]: https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html
