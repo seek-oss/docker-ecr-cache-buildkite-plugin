@@ -16,7 +16,6 @@ ECR_LIFECYCLE_DEFAULT_RULES_JSON=$(cat <<'EOF'
 EOF
 )
 
-source "$(dirname "${BASH_SOURCE[0]}")/tag-ttl-validation.bash"
 source "$(dirname "${BASH_SOURCE[0]}")/get-tag-ttl-rules.bash"
 
 login() {

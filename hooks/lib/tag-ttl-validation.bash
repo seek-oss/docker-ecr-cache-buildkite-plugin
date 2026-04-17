@@ -1,6 +1,7 @@
 validate_tag_ttl_env_vars() {
   local base_var='BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_'
-  declare -A prefix_indices ttl_indices
+  local prefix_indices=""
+  local ttl_indices=""
 
   while IFS='=' read -r name value ; do
     if [[ ! $name =~ ^${base_var} ]]; then
@@ -8,26 +9,32 @@ validate_tag_ttl_env_vars() {
     fi
 
     if [[ $name =~ ^${base_var}([0-9]+)_PREFIX$ ]]; then
-      prefix_indices["${BASH_REMATCH[1]}"]=1
+      local idx="${BASH_REMATCH[1]}"
+      if [[ " ${prefix_indices} " != *" ${idx} "* ]]; then
+        prefix_indices="${prefix_indices} ${idx}"
+      fi
       continue
     fi
 
     if [[ $name =~ ^${base_var}([0-9]+)_TTL$ ]]; then
-      ttl_indices["${BASH_REMATCH[1]}"]=1
+      local idx="${BASH_REMATCH[1]}"
+      if [[ " ${ttl_indices} " != *" ${idx} "* ]]; then
+        ttl_indices="${ttl_indices} ${idx}"
+      fi
       continue
     fi
 
     log_fatal "tag-ttl must be configured as an array of {prefix, ttl} entries; unsupported env var '${name}' detected" 1
   done < <(env | sort)
 
-  for idx in "${!ttl_indices[@]}"; do
-    if [[ -z "${prefix_indices[$idx]:-}" ]]; then
+  for idx in ${ttl_indices}; do
+    if [[ " ${prefix_indices} " != *" ${idx} "* ]]; then
       log_fatal "tag-ttl entry ${idx} has TTL but no PREFIX; both TAG_TTL_${idx}_PREFIX and TAG_TTL_${idx}_TTL must be configured" 1
     fi
   done
 
-  for idx in "${!prefix_indices[@]}"; do
-    if [[ -z "${ttl_indices[$idx]:-}" ]]; then
+  for idx in ${prefix_indices}; do
+    if [[ " ${ttl_indices} " != *" ${idx} "* ]]; then
       log_fatal "tag-ttl entry ${idx} has PREFIX but no TTL; both TAG_TTL_${idx}_PREFIX and TAG_TTL_${idx}_TTL must be configured" 1
     fi
   done

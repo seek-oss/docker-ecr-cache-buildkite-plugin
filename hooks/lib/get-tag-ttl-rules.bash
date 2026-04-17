@@ -1,3 +1,5 @@
+source "$(dirname "${BASH_SOURCE[0]}")/tag-ttl-validation.bash"
+
 get_tag_ttl_rules() {
   local result='{}'
   local base_var='BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_'
