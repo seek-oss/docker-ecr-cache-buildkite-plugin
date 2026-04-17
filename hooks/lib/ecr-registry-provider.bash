@@ -84,7 +84,7 @@ get_ecr_repository_name() {
 configure_registry_for_image_if_necessary() {
   local repository_name
   repository_name="$(get_ecr_repository_name)"
-  local max_age_days="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_MAX_AGE_DAYS:-30}"
+  local max_age_days="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_MAX_AGE_DAYS:-7}"
   local ecr_tags="$(get_ecr_tags)"
   local num_tags=$(echo $ecr_tags | jq '.tags | length')
 
