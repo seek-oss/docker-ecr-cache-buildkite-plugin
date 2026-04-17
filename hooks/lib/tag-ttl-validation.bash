@@ -29,13 +29,13 @@ validate_tag_ttl_env_vars() {
 
   for idx in ${ttl_indices}; do
     if [[ " ${prefix_indices} " != *" ${idx} "* ]]; then
-      log_fatal "tag-ttl entry ${idx} has TTL but no PREFIX; both TAG_TTL_${idx}_PREFIX and TAG_TTL_${idx}_TTL must be configured" 1
+      log_fatal "tag-ttl entry ${idx} has TTL but no PREFIX; both BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_${idx}_PREFIX and BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_${idx}_TTL must be configured" 1
     fi
   done
 
   for idx in ${prefix_indices}; do
     if [[ " ${ttl_indices} " != *" ${idx} "* ]]; then
-      log_fatal "tag-ttl entry ${idx} has PREFIX but no TTL; both TAG_TTL_${idx}_PREFIX and TAG_TTL_${idx}_TTL must be configured" 1
+      log_fatal "tag-ttl entry ${idx} has PREFIX but no TTL; both BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_${idx}_PREFIX and BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_TAG_TTL_${idx}_TTL must be configured" 1
     fi
   done
 
