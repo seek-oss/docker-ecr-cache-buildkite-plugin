@@ -1,6 +1,26 @@
+require_gcp_project() {
+  if [[ -z "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_GCP_PROJECT:-}" ]]; then
+    log_fatal "gcp-project in plugin settings must have a value." 34
+  fi
+}
+
+get_gcr_registry_hostname() {
+  if [[ -z "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGISTRY_HOSTNAME:-}" ]]; then
+    echoerr "registry-hostname had no value, defaulting to gcr.io"
+    BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGISTRY_HOSTNAME="gcr.io"
+  fi
+  echo "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGISTRY_HOSTNAME}"
+}
+
+get_gcr_image_name() {
+  echo "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_NAME:-"$(get_default_image_name)"}"
+}
+
 login() {
-  # Currently assume the use of docker-credential-gcr to manage AuthN transparently.
-  echo "Plugin currently assumes that docker-credential-gcr is on PATH and configured. See https://github.com/GoogleCloudPlatform/docker-credential-gcr#configuration-and-usage if later docker pull/push fail."
+  local registry_hostname
+  registry_hostname="$(get_gcr_registry_hostname)"
+
+  gcloud auth configure-docker "${registry_hostname}" --quiet
 }
 
 configure_registry_for_image_if_necessary() {
@@ -9,14 +29,17 @@ configure_registry_for_image_if_necessary() {
 }
 
 get_registry_url() {
-  if [[ -z "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_GCP_PROJECT:-}" ]]; then
-    log_fatal "gcp-project in plugin settings must have a value." 34
-  fi
-  if [[ -z "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGISTRY_HOSTNAME:-}" ]]; then
+  local registry_hostname="${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGISTRY_HOSTNAME:-}"
+  local image_name
+
+  if [[ -z "${registry_hostname}" ]]; then
     echoerr "registry-hostname had no value, defaulting to gcr.io"
-    BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGISTRY_HOSTNAME="gcr.io"
+    registry_hostname="gcr.io"
   fi
-  echo "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGISTRY_HOSTNAME}/${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_GCP_PROJECT}/${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_ECR_NAME:-"$(get_default_image_name)"}"
+
+  require_gcp_project
+  image_name="$(get_gcr_image_name)"
+  echo "${registry_hostname}/${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_GCP_PROJECT}/${image_name}"
 }
 
 image_exists() {

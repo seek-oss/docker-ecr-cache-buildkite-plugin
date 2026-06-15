@@ -4,11 +4,30 @@ load "$BATS_PLUGIN_PATH/load.bash"
 load "$PWD/hooks/lib/stdlib.bash"
 load "$PWD/hooks/lib/gcr-registry-provider.bash"
 
-@test "GCR: Can login" {
+@test "GCR: Can login with default registry hostname" {
+  stub gcloud \
+    "auth configure-docker gcr.io --quiet : echo configured docker for gcr.io"
+
   run login
 
   assert_success
-  assert_output --partial "Plugin currently assumes"
+  assert_output --partial "configured docker for gcr.io"
+
+  unstub gcloud
+}
+
+@test "GCR: Can login with custom registry hostname" {
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGISTRY_HOSTNAME="eu.gcr.io"
+
+  stub gcloud \
+    "auth configure-docker eu.gcr.io --quiet : echo configured docker for eu.gcr.io"
+
+  run login
+
+  assert_success
+  assert_output --partial "configured docker for eu.gcr.io"
+
+  unstub gcloud
 }
 
 @test "GCR: Can configure registry for image if necessary" {
