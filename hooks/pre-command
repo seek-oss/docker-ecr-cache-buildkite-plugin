@@ -49,6 +49,13 @@ else
       "--progress=plain"
       "--tag=${image}:${tag}"
     )
+    if [[ "${BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DISABLE_CACHE_METADATA:-}" != "true" ]]; then
+      # Embed BuildKit cache metadata so downstream builds can reuse this
+      # image via `--cache-from`; the docker driver only reads inline metadata.
+      image_build_args+=(
+        "--build-arg=BUILDKIT_INLINE_CACHE=1"
+      )
+    fi
     if [[ -n "${target:-}" ]]; then
       image_build_args+=(
         "--target=${target}"

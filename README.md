@@ -325,6 +325,48 @@ steps:
           skip-pull-from-cache: true
 ```
 
+### Using the image as a cache source for other builds
+
+Images built by this plugin embed [inline cache metadata] by default, so
+downstream builds can reuse their layers via `--cache-from` — for example with
+the [Docker ECR Publish](https://github.com/seek-oss/docker-ecr-publish-buildkite-plugin)
+plugin:
+
+```yaml
+steps:
+  - plugins:
+      - seek-oss/docker-ecr-publish#v2.4.0:
+          cache-from: ecr://build-cache/my-org/my-pipeline
+          ecr-name: my-repo
+```
+
+This matters because BuildKit's default `docker` driver can only read inline
+cache metadata: without it, `--cache-from` still pulls the image but re-runs
+every layer. On plugin versions that predate this behaviour, pass the build
+arg yourself:
+
+```yaml
+steps:
+  - command: echo wow
+    plugins:
+      - seek-oss/docker-ecr-cache#v2.2.1:
+          additional-build-args: '--build-arg BUILDKIT_INLINE_CACHE=1'
+      - docker#v5.10.0
+```
+
+Set `disable-cache-metadata: true` to opt out of embedding the metadata:
+
+```yaml
+steps:
+  - command: echo wow
+    plugins:
+      - seek-oss/docker-ecr-cache#v3.0.0:
+          disable-cache-metadata: true
+      - docker#v5.10.0
+```
+
+[inline cache metadata]: https://docs.docker.com/build/cache/backends/inline/
+
 ### AWS ECR specific configuration
 
 #### Specifying an ECR repository name

@@ -35,7 +35,7 @@ pre_command_hook="$PWD/hooks/pre-command"
 
   stub docker \
     "pull pretend.host/path/segment/image:stubbed-computed-tag : false" \
-    "build --file=Dockerfile --progress=plain --tag=pretend.host/path/segment/image:stubbed-computed-tag . : exit 242"
+    "build --file=Dockerfile --progress=plain --tag=pretend.host/path/segment/image:stubbed-computed-tag --build-arg=BUILDKIT_INLINE_CACHE=1 . : exit 242"
 
   run "${pre_command_hook}"
 
@@ -53,7 +53,7 @@ pre_command_hook="$PWD/hooks/pre-command"
 
   stub docker \
     "pull pretend.host/path/segment/image:stubbed-computed-tag : false" \
-    "build --file=Dockerfile --progress=plain --tag=pretend.host/path/segment/image:stubbed-computed-tag . : echo building docker image" \
+    "build --file=Dockerfile --progress=plain --tag=pretend.host/path/segment/image:stubbed-computed-tag --build-arg=BUILDKIT_INLINE_CACHE=1 . : echo building docker image" \
     "tag ${repository_uri}:stubbed-computed-tag ${repository_uri}:latest : echo tagged latest" \
     "push ${repository_uri}:stubbed-computed-tag : echo pushed stubbed-computed-tag" \
     "push ${repository_uri}:latest : echo pushed latest"
@@ -80,7 +80,7 @@ pre_command_hook="$PWD/hooks/pre-command"
 
   stub docker \
     "pull pretend.host/path/segment/image:stubbed-computed-tag : false" \
-    "build --file=$one_time_mktemp/Dockerfile --progress=plain --tag=pretend.host/path/segment/image:stubbed-computed-tag . : echo building docker image" \
+    "build --file=$one_time_mktemp/Dockerfile --progress=plain --tag=pretend.host/path/segment/image:stubbed-computed-tag --build-arg=BUILDKIT_INLINE_CACHE=1 . : echo building docker image" \
     "tag ${repository_uri}:stubbed-computed-tag ${repository_uri}:latest : echo tagged latest" \
     "push ${repository_uri}:stubbed-computed-tag : echo pushed stubbed-computed-tag" \
     "push ${repository_uri}:latest : echo pushed latest"
@@ -107,4 +107,26 @@ pre_command_hook="$PWD/hooks/pre-command"
 
   assert_success
   assert_line "Image exists, skipping pull"
+}
+
+@test "Omits inline cache metadata when disable-cache-metadata is true" {
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_REGISTRY_PROVIDER="stub"
+  export BUILDKITE_PLUGIN_DOCKER_ECR_CACHE_DISABLE_CACHE_METADATA="true"
+  local repository_uri="pretend.host/path/segment/image"
+
+  stub docker \
+    "pull pretend.host/path/segment/image:stubbed-computed-tag : false" \
+    "build --file=Dockerfile --progress=plain --tag=pretend.host/path/segment/image:stubbed-computed-tag . : echo building docker image" \
+    "tag ${repository_uri}:stubbed-computed-tag ${repository_uri}:latest : echo tagged latest" \
+    "push ${repository_uri}:stubbed-computed-tag : echo pushed stubbed-computed-tag" \
+    "push ${repository_uri}:latest : echo pushed latest"
+  run "${pre_command_hook}"
+
+  assert_success
+  assert_line "--- Pulling image"
+  assert_line "--- Building image"
+  assert_line "--- Pushing tag stubbed-computed-tag"
+  assert_line "--- Pushing tag latest"
+
+  unstub docker
 }
